@@ -1,0 +1,13 @@
+# roadrdd dataset configuration (YOLO format)
+
+# Relative paths (relative to this file's location or the training root)
+path: dataset/roadrdd
+train: images/train
+val: images/val
+test: images/test
+
+# number of classes
+nc: 2
+
+# class names
+names: ['crack', 'pothole']
