@@ -1,0 +1,500 @@
+/***************************************************************************************************
+ * Copyright (c) 2017-2020, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ *modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright notice,
+ *this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *notice, this list of conditions and the following disclaimer in the
+ *documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the NVIDIA CORPORATION nor the names of its
+ *contributors may be used to endorse or promote products derived from this
+ *software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *DISCLAIMED. IN NO EVENT SHALL NVIDIA CORPORATION BE LIABLE FOR ANY DIRECT,
+ *INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ *OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TOR (INCLUDING
+ *NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ **************************************************************************************************/
+
+#pragma once
+
+#include "cutlass/cutlass.h"
+#include "cutlass/numeric_types.h"
+#include "cutlass/array.h"
+#include "cutlass/functional.h"
+#include "cutlass/numeric_conversion.h"
+
+
+namespace cutlass {
+namespace epilogue {
+namespace thread {
+
+
+template <typename ElementOutput_,
+          int Count,
+          typename ElementAccumulator_ =
+                  ElementOutput_,
+          typename ElementCompute_ =
+                  ElementOutput_,
+          FloatRoundStyle Round = FloatRoundStyle::round_to_nearest>
+class LinearCombinationClamp {
+public:
+    using ElementOutput = ElementOutput_;
+    using ElementAccumulator = ElementAccumulator_;
+    using ElementCompute = ElementCompute_;
+
+    static int const kCount = Count;
+
+    using FragmentOutput = Array<ElementOutput, kCount>;
+    using FragmentAccumulator = Array<ElementAccumulator, kCount>;
+    using ComputeFragment = Array<ElementCompute, kCount>;
+
+    static FloatRoundStyle const kRound = Round;
+
+    struct Params {
+        ElementCompute alpha;
+        ElementCompute beta;
+        ElementCompute const* alpha_ptr;
+        ElementCompute const* beta_ptr;
+
+
+        CUTLASS_HOST_DEVICE
+        Params()
+                : alpha(ElementCompute(1)),
+                  beta(ElementCompute(0)),
+                  alpha_ptr(nullptr),
+                  beta_ptr(nullptr) {}
+
+        CUTLASS_HOST_DEVICE
+        Params(ElementCompute alpha, ElementCompute beta)
+                : alpha(alpha),
+                  beta(beta),
+                  alpha_ptr(nullptr),
+                  beta_ptr(nullptr) {}
+
+        CUTLASS_HOST_DEVICE
+        Params(ElementCompute const* alpha_ptr, ElementCompute const* beta_ptr)
+                : alpha(0), beta(0), alpha_ptr(alpha_ptr), beta_ptr(beta_ptr) {}
+    };
+
+private:
+
+    ElementCompute alpha_;
+    ElementCompute beta_;
+
+public:
+    CUTLASS_HOST_DEVICE
+    LinearCombinationClamp(Params const& params) {
+        alpha_ = (params.alpha_ptr ? *params.alpha_ptr : params.alpha);
+        beta_ = (params.beta_ptr ? *params.beta_ptr : params.beta);
+    }
+
+    CUTLASS_HOST_DEVICE
+    bool is_source_needed() const { return beta_ != ElementCompute(0); }
+
+    CUTLASS_HOST_DEVICE
+    void set_k_partition(int k_partition, int k_partition_count) {
+        if (k_partition) {
+            beta_ = ElementCompute(1);
+        }
+    }
+
+    CUTLASS_HOST_DEVICE
+    FragmentOutput operator()(
+            FragmentAccumulator const& accumulator,
+            FragmentOutput const& source,
+            ElementCompute uniform = ElementCompute(0)) const {
+        NumericArrayConverter<ElementCompute, ElementOutput, kCount, Round>
+                source_converter;
+        NumericArrayConverter<ElementCompute, ElementAccumulator, kCount, Round>
+                accumulator_converter;
+
+        ComputeFragment converted_source = source_converter(source);
+        ComputeFragment converted_accumulator =
+                accumulator_converter(accumulator);
+
+
+        ComputeFragment intermediate;
+
+        multiplies<ComputeFragment> mul_add_source;
+        multiply_add<ComputeFragment> mul_add_accumulator;
+
+        minimum<ComputeFragment> min_accumulator;
+        maximum<ComputeFragment> max_accumulator;
+
+        intermediate = mul_add_source(
+                beta_, converted_source);
+        intermediate =
+                mul_add_accumulator(alpha_, converted_accumulator,
+                                    intermediate);
+
+        ElementCompute const kClamp = ElementCompute(
+                (1U << (sizeof_bits<ElementOutput>::value - 1)) - 1);
+
+        intermediate =
+                max_accumulator(intermediate, -kClamp - ElementCompute(1));
+        intermediate = min_accumulator(intermediate, kClamp);
+
+        NumericArrayConverter<ElementOutput, ElementCompute, kCount, Round>
+                destination_converter;
+
+        return destination_converter(intermediate);
+    }
+
+    CUTLASS_HOST_DEVICE
+    FragmentOutput operator()(FragmentAccumulator const& accumulator) const {
+        NumericArrayConverter<ElementCompute, ElementAccumulator, kCount, Round>
+                accumulator_converter;
+
+        ComputeFragment converted_accumulator =
+                accumulator_converter(accumulator);
+
+
+        ComputeFragment intermediate;
+
+        multiplies<ComputeFragment> mul_accumulator;
+
+        minimum<ComputeFragment> min_accumulator;
+        maximum<ComputeFragment> max_accumulator;
+
+        intermediate = mul_accumulator(
+                alpha_, converted_accumulator);
+
+        ElementCompute const kClamp = ElementCompute(
+                (1U << (sizeof_bits<ElementOutput>::value - 1)) - 1);
+
+        intermediate =
+                max_accumulator(intermediate, -kClamp - ElementCompute(1));
+        intermediate = min_accumulator(intermediate, kClamp);
+
+        NumericArrayConverter<ElementOutput, ElementCompute, kCount, Round>
+                destination_converter;
+
+        return destination_converter(intermediate);
+    }
+};
+
+
+#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 720) && \
+        ((__CUDACC_VER_MAJOR__ > 10) ||                 \
+         ((__CUDACC_VER_MAJOR__ >= 10) && (__CUDACC_VER_MINOR__ >= 2)))
+
+template <typename ElementOutput_,
+          int Count,
+          FloatRoundStyle Round>
+class LinearCombinationClamp<ElementOutput_, Count, int, float, Round> {
+public:
+    using ElementOutput = ElementOutput_;
+    using ElementAccumulator = int;
+    using ElementCompute = float;
+
+    static_assert(
+            platform::is_same<ElementOutput, int32_t>::value ||
+                    platform::is_same<ElementOutput, uint32_t>::value ||
+                    platform::is_same<ElementOutput, int16_t>::value ||
+                    platform::is_same<ElementOutput, uint16_t>::value ||
+                    platform::is_same<ElementOutput, int8_t>::value ||
+                    platform::is_same<ElementOutput, uint8_t>::value ||
+                    platform::is_same<ElementOutput, cutlass::int4b_t>::value ||
+                    platform::is_same<ElementOutput,
+                                      cutlass::uint4b_t>::value ||
+                    platform::is_same<ElementOutput, cutlass::uint1b_t>::value,
+            "This elementwise op expects the output to be int.");
+
+    static int const kCount = Count;
+
+    using FragmentOutput = Array<ElementOutput, kCount>;
+    using FragmentAccumulator = Array<ElementAccumulator, kCount>;
+    using ComputeFragment = Array<ElementCompute, kCount>;
+
+    static FloatRoundStyle const kRound = Round;
+
+    struct Params {
+        ElementCompute alpha;
+        ElementCompute beta;
+        ElementCompute const* alpha_ptr;
+        ElementCompute const* beta_ptr;
+
+
+        CUTLASS_HOST_DEVICE
+        Params()
+                : alpha(ElementCompute(1)),
+                  beta(ElementCompute(0)),
+                  alpha_ptr(nullptr),
+                  beta_ptr(nullptr) {}
+
+        CUTLASS_HOST_DEVICE
+        Params(ElementCompute alpha, ElementCompute beta)
+                : alpha(alpha),
+                  beta(beta),
+                  alpha_ptr(nullptr),
+                  beta_ptr(nullptr) {}
+
+        CUTLASS_HOST_DEVICE
+        Params(ElementCompute const* alpha_ptr, ElementCompute const* beta_ptr)
+                : alpha(0), beta(0), alpha_ptr(alpha_ptr), beta_ptr(beta_ptr) {}
+    };
+
+private:
+
+    ElementCompute alpha_;
+    ElementCompute beta_;
+
+public:
+    CUTLASS_HOST_DEVICE
+    LinearCombinationClamp(Params const& params) {
+        alpha_ = (params.alpha_ptr ? *params.alpha_ptr : params.alpha);
+        beta_ = (params.beta_ptr ? *params.beta_ptr : params.beta);
+    }
+
+    CUTLASS_HOST_DEVICE
+    bool is_source_needed() const { return beta_ != ElementCompute(0); }
+
+    CUTLASS_HOST_DEVICE
+    void set_k_partition(int k_partition, int k_partition_count) {
+        if (k_partition) {
+            beta_ = ElementCompute(1);
+        }
+    }
+
+    CUTLASS_HOST_DEVICE
+    FragmentOutput operator()(
+            FragmentAccumulator const& accumulator,
+            FragmentOutput const& source,
+            ElementCompute uniform = ElementCompute(0)) const {
+        NumericArrayConverter<ElementCompute, ElementOutput, kCount, Round>
+                source_converter;
+        NumericArrayConverter<ElementCompute, ElementAccumulator, kCount, Round>
+                accumulator_converter;
+
+        ComputeFragment converted_source = source_converter(source);
+        ComputeFragment converted_accumulator =
+                accumulator_converter(accumulator);
+
+        ComputeFragment intermediate;
+
+        multiplies<ComputeFragment> mul_add_source;
+        multiply_add<ComputeFragment> mul_add_accumulator;
+
+        intermediate = mul_add_source(
+                beta_, converted_source);
+        intermediate =
+                mul_add_accumulator(alpha_, converted_accumulator,
+                                    intermediate);
+
+        FragmentAccumulator scaled_accumulator;
+
+        CUTLASS_PRAGMA_UNROLL
+        for (int i = 0; i < kCount; ++i) {
+            scaled_accumulator[i] = __float2int_rn(intermediate[i]);
+        }
+
+        NumericArrayConverter<ElementOutput, int, kCount, Round>
+                destination_converter;
+
+        return destination_converter(scaled_accumulator);
+    }
+
+    CUTLASS_HOST_DEVICE
+    FragmentOutput operator()(FragmentAccumulator const& accumulator) const {
+        NumericArrayConverter<ElementCompute, ElementAccumulator, kCount, Round>
+                accumulator_converter;
+
+        ComputeFragment converted_accumulator =
+                accumulator_converter(accumulator);
+
+        ComputeFragment intermediate;
+
+        multiplies<ComputeFragment> mul_add_accumulator;
+
+        intermediate = mul_add_accumulator(
+                alpha_, converted_accumulator);
+
+        FragmentAccumulator scaled_accumulator;
+
+        CUTLASS_PRAGMA_UNROLL
+        for (int i = 0; i < kCount; ++i) {
+            scaled_accumulator[i] = __float2int_rn(intermediate[i]);
+        }
+
+        NumericArrayConverter<ElementOutput, int, kCount, Round>
+                destination_converter;
+
+        return destination_converter(scaled_accumulator);
+    }
+};
+
+#endif
+
+
+/// Note: The below method only when problem_size_K <= 256 for signed int8 gemm
+template <
+        typename ElementOutput_,
+        int Count,
+        FloatRoundStyle Round = FloatRoundStyle::round_to_nearest>
+class FastLinearCombinationClamp {
+public:
+    using ElementOutput = ElementOutput_;
+    using ElementAccumulator = int;
+    using ElementCompute = float;
+
+    static_assert(
+            platform::is_same<ElementOutput, int32_t>::value ||
+                    platform::is_same<ElementOutput, uint32_t>::value ||
+                    platform::is_same<ElementOutput, int16_t>::value ||
+                    platform::is_same<ElementOutput, uint16_t>::value ||
+                    platform::is_same<ElementOutput, int8_t>::value ||
+                    platform::is_same<ElementOutput, uint8_t>::value ||
+                    platform::is_same<ElementOutput, cutlass::int4b_t>::value ||
+                    platform::is_same<ElementOutput,
+                                      cutlass::uint4b_t>::value ||
+                    platform::is_same<ElementOutput, cutlass::uint1b_t>::value,
+            "This elementwise op expects the output to be int.");
+
+    static int const kCount = Count;
+
+    using FragmentOutput = Array<ElementOutput, kCount>;
+    using FragmentAccumulator = Array<ElementAccumulator, kCount>;
+    using ComputeFragment = Array<ElementCompute, kCount>;
+
+    static FloatRoundStyle const kRound = Round;
+
+    struct Params {
+        ElementCompute alpha;
+        ElementCompute beta;
+        ElementCompute const* alpha_ptr;
+        ElementCompute const* beta_ptr;
+
+
+        CUTLASS_HOST_DEVICE
+        Params()
+                : alpha(ElementCompute(1)),
+                  beta(ElementCompute(0)),
+                  alpha_ptr(nullptr),
+                  beta_ptr(nullptr) {}
+
+        CUTLASS_HOST_DEVICE
+        Params(ElementCompute alpha, ElementCompute beta)
+                : alpha(alpha),
+                  beta(beta),
+                  alpha_ptr(nullptr),
+                  beta_ptr(nullptr) {}
+
+        CUTLASS_HOST_DEVICE
+        Params(ElementCompute const* alpha_ptr, ElementCompute const* beta_ptr)
+                : alpha(0), beta(0), alpha_ptr(alpha_ptr), beta_ptr(beta_ptr) {}
+    };
+
+private:
+
+    ElementCompute alpha_;
+    ElementCompute beta_;
+
+public:
+    CUTLASS_HOST_DEVICE
+    FastLinearCombinationClamp(Params const& params) {
+        alpha_ = (params.alpha_ptr ? *params.alpha_ptr : params.alpha);
+        beta_ = (params.beta_ptr ? *params.beta_ptr : params.beta);
+    }
+
+    CUTLASS_HOST_DEVICE
+    bool is_source_needed() const { return beta_ != ElementCompute(0); }
+
+    CUTLASS_HOST_DEVICE
+    void set_k_partition(int k_partition, int k_partition_count) {
+        if (k_partition) {
+            beta_ = ElementCompute(1);
+        }
+    }
+
+    CUTLASS_HOST_DEVICE
+    FragmentOutput operator()(
+            FragmentAccumulator const& accumulator,
+            FragmentOutput const& source,
+            ElementCompute uniform = ElementCompute(0)) const {
+        FastNumericArrayConverter<ElementCompute, ElementOutput, kCount, Round>
+                source_converter;
+        FastNumericArrayConverter<ElementCompute, ElementAccumulator, kCount,
+                                  Round>
+                accumulator_converter;
+
+        ComputeFragment converted_source = source_converter(source);
+        ComputeFragment converted_accumulator =
+                accumulator_converter(accumulator);
+
+        ComputeFragment intermediate;
+
+        multiplies<ComputeFragment> mul_add_source;
+        multiply_add<ComputeFragment> mul_add_accumulator;
+
+        minimum<ComputeFragment> min_accumulator;
+        maximum<ComputeFragment> max_accumulator;
+
+        intermediate = mul_add_source(
+                beta_, converted_source);
+        intermediate =
+                mul_add_accumulator(alpha_, converted_accumulator,
+                                    intermediate);
+
+        ElementCompute const kClampMax =
+                ElementCompute(platform::numeric_limits<ElementOutput>::max());
+
+        ElementCompute const kClampMin = ElementCompute(
+                platform::numeric_limits<ElementOutput>::lowest());
+
+        intermediate = max_accumulator(intermediate, kClampMin);
+        intermediate = min_accumulator(intermediate, kClampMax);
+
+        FastNumericArrayConverter<ElementOutput, ElementCompute, kCount, Round>
+                destination_converter;
+
+        return destination_converter(intermediate);
+    }
+
+    CUTLASS_HOST_DEVICE
+    FragmentOutput operator()(FragmentAccumulator const& accumulator) const {
+        FastNumericArrayConverter<ElementCompute, ElementAccumulator, kCount,
+                                  Round>
+                accumulator_converter;
+
+        ComputeFragment converted_accumulator =
+                accumulator_converter(accumulator);
+
+        ComputeFragment intermediate;
+
+        multiplies<ComputeFragment> mul_accumulator;
+
+        minimum<ComputeFragment> min_accumulator;
+        maximum<ComputeFragment> max_accumulator;
+
+        intermediate = mul_accumulator(alpha_, converted_accumulator);
+
+        ElementCompute const kClampMax =
+                ElementCompute(platform::numeric_limits<ElementOutput>::max());
+
+        ElementCompute const kClampMin = ElementCompute(
+                platform::numeric_limits<ElementOutput>::lowest());
+
+        intermediate = max_accumulator(intermediate, kClampMin);
+        intermediate = min_accumulator(intermediate, kClampMax);
+
+        FastNumericArrayConverter<ElementOutput, ElementCompute, kCount, Round>
+                destination_converter;
+
+        return destination_converter(intermediate);
+    }
+};
+
+
+}
+}
+}

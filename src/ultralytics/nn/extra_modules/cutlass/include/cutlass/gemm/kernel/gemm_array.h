@@ -1,0 +1,192 @@
+/***************************************************************************************************
+ * Copyright (c) 2017-2020, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ *modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright notice,
+ *this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *notice, this list of conditions and the following disclaimer in the
+ *documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the NVIDIA CORPORATION nor the names of its
+ *contributors may be used to endorse or promote products derived from this
+ *software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *DISCLAIMED. IN NO EVENT SHALL NVIDIA CORPORATION BE LIABLE FOR ANY DIRECT,
+ *INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ *OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TOR (INCLUDING
+ *NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ *EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ **************************************************************************************************/
+
+#pragma once
+
+#include "cutlass/cutlass.h"
+
+#include "cutlass/gemm/gemm.h"
+#include "cutlass/matrix_coord.h"
+
+
+namespace cutlass {
+namespace gemm {
+namespace kernel {
+
+
+template <typename Mma_,
+          typename Epilogue_,
+          typename ThreadblockSwizzle_
+          >
+struct GemmArray {
+    using Mma = Mma_;
+    using Epilogue = Epilogue_;
+    using OutputOp = typename Epilogue::OutputOp;
+    using ThreadblockSwizzle = ThreadblockSwizzle_;
+
+    using WarpCount = typename Mma::WarpCount;
+    static int const kThreadCount = 32 * WarpCount::kCount;
+
+    struct Params {
+        cutlass::gemm::GemmCoord problem_size;
+        cutlass::gemm::GemmCoord grid_tiled_shape;
+        typename Mma::IteratorA::Params params_A;
+        typename Mma::IteratorA::Element const* const* ptr_A;
+        typename Mma::IteratorB::Params params_B;
+        typename Mma::IteratorB::Element const* const* ptr_B;
+        typename Epilogue::OutputTileIterator::Params params_C;
+        typename Epilogue::OutputTileIterator::Element const* const* ptr_C;
+        typename Epilogue::OutputTileIterator::Params params_D;
+        typename Epilogue::OutputTileIterator::Element* const* ptr_D;
+        int64_t stride_D;
+        typename OutputOp::Params epilogue;
+        int batch_count;
+        int gemm_k_iterations;
+
+
+        CUTLASS_HOST_DEVICE
+        Params() {}
+
+        CUTLASS_HOST_DEVICE
+        Params(cutlass::gemm::GemmCoord const& problem_size_,
+               cutlass::gemm::GemmCoord const& grid_tiled_shape_,
+               typename Mma::IteratorA::Element const* const* ptr_A_,
+               typename Mma::IteratorA::Layout layout_A,
+               typename Mma::IteratorB::Element const* const* ptr_B_,
+               typename Mma::IteratorB::Layout layout_B,
+               typename Epilogue::OutputTileIterator::Element const* const*
+                       ptr_C_,
+               typename Epilogue::OutputTileIterator::Layout layout_C,
+               typename Epilogue::OutputTileIterator::Element* const* ptr_D_,
+               typename Epilogue::OutputTileIterator::Layout layout_D,
+               typename OutputOp::Params epilogue_, int batch_count_)
+                : problem_size(problem_size_),
+                  grid_tiled_shape(grid_tiled_shape_),
+                  params_A(layout_A),
+                  ptr_A(ptr_A_),
+                  params_B(layout_B),
+                  ptr_B(ptr_B_),
+                  params_C(layout_C),
+                  ptr_C(ptr_C_),
+                  params_D(layout_D),
+                  ptr_D(ptr_D_),
+                  epilogue(epilogue_),
+                  batch_count(batch_count_),
+                  gemm_k_iterations((problem_size.k() + Mma::Shape::kK - 1) /
+                                    Mma::Shape::kK) {}
+    };
+
+    union SharedStorage {
+        typename Mma::SharedStorage main_loop;
+        typename Epilogue::SharedStorage epilogue;
+    };
+
+
+    CUTLASS_HOST_DEVICE
+    GemmArray() {}
+
+    CUTLASS_DEVICE
+    void operator()(Params const& params, SharedStorage& shared_storage) {
+        ThreadblockSwizzle threadblock_swizzle;
+
+        cutlass::gemm::GemmCoord threadblock_tile_offset =
+                threadblock_swizzle.get_tile_offset(params.grid_tiled_shape);
+
+        if (params.grid_tiled_shape.m() <= threadblock_tile_offset.m() ||
+            params.grid_tiled_shape.n() <= threadblock_tile_offset.n()) {
+            return;
+        }
+
+        for (int batch_idx = threadblock_swizzle.get_batch_idx();
+             batch_idx < params.batch_count; batch_idx += gridDim.z) {
+            cutlass::MatrixCoord tb_offset_A{
+                    threadblock_tile_offset.m() * Mma::Shape::kM, 0};
+
+            cutlass::MatrixCoord tb_offset_B{
+                    0, threadblock_tile_offset.n() * Mma::Shape::kN};
+
+            int thread_idx = threadIdx.x;
+
+            typename Mma::IteratorA iterator_A(
+                    params.params_A,
+                    const_cast<typename Mma::IteratorA::Element*>(
+                            params.ptr_A[batch_idx]),
+                    params.problem_size.mk(), thread_idx, tb_offset_A);
+
+            typename Mma::IteratorB iterator_B(
+                    params.params_B,
+                    const_cast<typename Mma::IteratorB::Element*>(
+                            params.ptr_B[batch_idx]),
+                    params.problem_size.kn(), thread_idx, tb_offset_B);
+
+
+            int warp_idx = __shfl_sync(0xffffffff, threadIdx.x / 32, 0);
+
+            int lane_idx = threadIdx.x % 32;
+
+            Mma mma(shared_storage.main_loop, thread_idx, warp_idx, lane_idx);
+
+            typename Mma::FragmentC accumulators;
+
+            accumulators.clear();
+
+            mma(params.gemm_k_iterations, accumulators, iterator_A, iterator_B,
+                accumulators);
+
+
+            OutputOp output_op(params.epilogue);
+
+
+            threadblock_tile_offset = threadblock_swizzle.get_tile_offset(
+                    params.grid_tiled_shape);
+
+            MatrixCoord threadblock_offset(
+                    threadblock_tile_offset.m() * Mma::Shape::kM,
+                    threadblock_tile_offset.n() * Mma::Shape::kN);
+
+            typename Epilogue::OutputTileIterator iterator_C(
+                    params.params_C,
+                    const_cast<typename Epilogue::OutputTileIterator::Element*>(
+                            params.ptr_C[batch_idx]),
+                    params.problem_size.mn(), thread_idx, threadblock_offset);
+
+            typename Epilogue::OutputTileIterator iterator_D(
+                    params.params_D, params.ptr_D[batch_idx],
+                    params.problem_size.mn(), thread_idx, threadblock_offset);
+
+            Epilogue epilogue(shared_storage.epilogue, thread_idx, warp_idx,
+                              lane_idx);
+
+            epilogue(output_op, iterator_D, accumulators, iterator_C);
+        }
+    }
+};
+
+
+}
+}
+}

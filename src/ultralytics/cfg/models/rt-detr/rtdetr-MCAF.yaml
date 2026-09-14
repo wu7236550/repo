@@ -1,0 +1,49 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# RT-DETR-l object detection model with P3-P5 outputs. For details see https://docs.ultralytics.com/models/rtdetr
+
+nc: 80
+scales:
+  l: [1.00, 1.00, 1024]
+
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [-1, 1, MCAF, [128, 64, 32, 1]]
+
+  - [-1, 1, ADown, [128]]
+
+  - [-1, 1, MCAF, [128, 64, 32, 1]]
+
+  - [-1, 1, ADown, [256]]
+
+  - [-1, 1, MCAF, [256, 128, 64, 1]]
+
+  - [-1, 1, ADown, [512]]
+
+  - [-1, 1, MCAF, [512, 256, 128, 1]]
+
+head:
+  - [-1, 1, Conv, [256, 1, 1, None, 1, 1, False]]
+  - [-1, 1, AIFI, [1024, 8]]
+  - [-1, 1, Conv, [256, 1, 1]]
+
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [6, 1, Conv, [256, 1, 1, None, 1, 1, False]]
+  - [[-2, -1], 1, Concat, [1]]
+  - [-1, 1, MCAF, [256, 128, 64, 1]]
+  - [-1, 1, Conv, [256, 1, 1]]
+
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
+  - [4, 1, Conv, [256, 1, 1, None, 1, 1, False]]
+  - [[-2, -1], 1, Concat, [1]]
+  - [-1, 1, MCAF, [256, 128, 64, 1]]
+
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 16], 1, Concat, [1]]
+  - [-1, 1, MCAF, [256, 128, 64, 1]]
+
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 11], 1, Concat, [1]]
+  - [-1, 1, MCAF, [256, 128, 64, 1]]
+
+  - [[20, 23, 26], 1, RTDETRDecoder, [nc, 256, 300, 4, 8, 3]]
