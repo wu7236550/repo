@@ -3,12 +3,23 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Training outputs (not uploaded)
+# Training artefacts.
+# Intentionally NOT distributed with this repository: checkpoints, exported engines and
+# per-run logs/outputs. The scripts needed to regenerate them from the released dataset
+# and configurations are included (see src/train.py, src/val.py, src/get_FPS.py).
 runs/
 run/
 dvclive/
 *.pth
 *.pt
+*.engine
+*.onnx
+
+# Profiling / evaluation outputs (regenerated locally)
+flops_fvcore.csv
+flops_ops_breakdown.csv
+fps_result.json
+result/
 
 # OS
 .DS_Store

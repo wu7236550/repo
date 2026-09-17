@@ -739,7 +739,7 @@ class LRPB(nn.Module):
 
 class LRPB_Attention(nn.Module):
 
-    def __init__(self, dim, group_size, num_heads=8, qkv_bias=True, qk_scale=None, attn_drop=0., proj_drop=0.,
+    def __init__(self, dim, group_size=None, num_heads=8, qkv_bias=True, qk_scale=None, attn_drop=0., proj_drop=0.,
                  position_bias=True):
 
         super().__init__()
@@ -752,24 +752,10 @@ class LRPB_Attention(nn.Module):
 
         if position_bias:
             self.pos = LRPB(self.dim // 4, self.num_heads, residual=False)
-            
-            position_bias_h = torch.arange(1 - self.group_size[0], self.group_size[0])
-            position_bias_w = torch.arange(1 - self.group_size[1], self.group_size[1])
-            biases = torch.stack(torch.meshgrid([position_bias_h, position_bias_w]))
-            biases = biases.flatten(1).transpose(0, 1).float()
-            self.register_buffer("biases", biases, persistent=False)
-
-            coords_h = torch.arange(self.group_size[0])
-            coords_w = torch.arange(self.group_size[1])
-            coords = torch.stack(torch.meshgrid([coords_h, coords_w]))
-            coords_flatten = torch.flatten(coords, 1)
-            relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]
-            relative_coords = relative_coords.permute(1, 2, 0).contiguous()
-            relative_coords[:, :, 0] += self.group_size[0] - 1
-            relative_coords[:, :, 1] += self.group_size[1] - 1
-            relative_coords[:, :, 0] *= 2 * self.group_size[1] - 1
-            relative_position_index = relative_coords.sum(-1)
-            self.register_buffer("relative_position_index", relative_position_index, persistent=False)
+            self._bias_table_cache = {}
+            if group_size is not None:
+                h, w = int(group_size[0]), int(group_size[1])
+                self._bias_table_cache[(h, w, 'cpu', 'torch.float32')] = self._make_bias_tables(h, w)
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
@@ -778,8 +764,44 @@ class LRPB_Attention(nn.Module):
 
         self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self, x, mask=None):
+    @staticmethod
+    def _make_bias_tables(H, W, device=None, dtype=None):
+        position_bias_h = torch.arange(1 - H, H, device=device)
+        position_bias_w = torch.arange(1 - W, W, device=device)
+        biases = torch.stack(torch.meshgrid(position_bias_h, position_bias_w, indexing='ij'))
+        biases = biases.flatten(1).transpose(0, 1).float()
+        if dtype is not None:
+            biases = biases.to(dtype)
+
+        coords_h = torch.arange(H, device=device)
+        coords_w = torch.arange(W, device=device)
+        coords = torch.stack(torch.meshgrid(coords_h, coords_w, indexing='ij'))
+        coords_flatten = torch.flatten(coords, 1)
+        relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]
+        relative_coords = relative_coords.permute(1, 2, 0).contiguous()
+        relative_coords[:, :, 0] += H - 1
+        relative_coords[:, :, 1] += W - 1
+        relative_coords[:, :, 0] *= 2 * W - 1
+        relative_position_index = relative_coords.sum(-1)
+        return biases, relative_position_index
+
+    def _get_bias_tables(self, H, W, device, dtype):
+        key = (int(H), int(W), str(device), str(dtype))
+        tables = self._bias_table_cache.get(key)
+        if tables is None:
+            tables = self._make_bias_tables(int(H), int(W), device=device, dtype=dtype)
+            self._bias_table_cache[key] = tables
+        return tables
+
+    def forward(self, x, mask=None, hw=None):
         B_, N, C = x.shape
+        if hw is not None:
+            H, W = int(hw[0]), int(hw[1])
+        elif self.group_size is not None:
+            H, W = int(self.group_size[0]), int(self.group_size[1])
+        else:
+            H = W = int(round(N ** 0.5))
+        assert H * W == N, 'LRPB: token count %d does not match %dx%d=%d' % (N, H, W, H * W)
         qkv = self.qkv(x).reshape(B_, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
@@ -787,9 +809,9 @@ class LRPB_Attention(nn.Module):
         attn = (q @ k.transpose(-2, -1))
 
         if self.position_bias:
-            pos = self.pos(self.biases)
-            relative_position_bias = pos[self.relative_position_index.view(-1)].view(
-                self.group_size[0] * self.group_size[1], self.group_size[0] * self.group_size[1], -1)
+            biases, relative_position_index = self._get_bias_tables(H, W, x.device, x.dtype)
+            pos = self.pos(biases)
+            relative_position_bias = pos[relative_position_index.view(-1)].view(H * W, H * W, -1)
             relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()
             attn = attn + relative_position_bias.unsqueeze(0)
 
@@ -812,7 +834,7 @@ class LRPB_AIFI(nn.Module):
 
     def __init__(self, c1, cm=2048, num_heads=8, dropout=0.0, act=nn.GELU(), normalize_before=False):
         super().__init__()
-        self.lrpb_attention = LRPB_Attention(c1, (20, 20))
+        self.lrpb_attention = LRPB_Attention(c1, None)
         self.fc1 = nn.Conv2d(c1, cm, 1)
         self.fc2 = nn.Conv2d(cm, c1, 1)
 
@@ -827,7 +849,7 @@ class LRPB_AIFI(nn.Module):
 
     def forward_post(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         BS, C, H, W = src.size()
-        src2 = self.lrpb_attention(src.flatten(2).permute(0, 2, 1)).permute(0, 2, 1).view([-1, C, H, W]).contiguous()
+        src2 = self.lrpb_attention(src.flatten(2).permute(0, 2, 1), hw=(H, W)).permute(0, 2, 1).view([-1, C, H, W]).contiguous()
         src = src + self.dropout1(src2)
         src = self.norm1(src)
         src2 = self.fc2(self.dropout(self.act(self.fc1(src))))

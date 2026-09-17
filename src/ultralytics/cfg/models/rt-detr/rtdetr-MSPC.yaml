@@ -1,7 +1,4 @@
-# Ultralytics YOLO 🚀, AGPL-3.0 license
-# RT-DETR-l object detection model with P3-P5 outputs. For details see https://docs.ultralytics.com/models/rtdetr
-
-nc: 80
+nc: 2
 scales:
   l: [1.00, 1.00, 1024]
 
