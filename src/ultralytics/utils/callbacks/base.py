@@ -4,7 +4,6 @@ from collections import defaultdict
 from copy import deepcopy
 
 
-
 def on_pretrain_routine_start(trainer):
     pass
 
@@ -61,8 +60,6 @@ def teardown(trainer):
     pass
 
 
-
-
 def on_val_start(validator):
     pass
 
@@ -77,8 +74,6 @@ def on_val_batch_end(validator):
 
 def on_val_end(validator):
     pass
-
-
 
 
 def on_predict_start(predictor):
@@ -99,8 +94,6 @@ def on_predict_postprocess_end(predictor):
 
 def on_predict_end(predictor):
     pass
-
-
 
 
 def on_export_start(exporter):

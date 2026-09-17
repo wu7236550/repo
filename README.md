@@ -26,14 +26,16 @@ figures reported in the paper.
 
 Three scenario-adapted modifications of RT-DETR-R18:
 
-1. **MSPC** — lightweight backbone replacing the residual blocks; multi-scale partial
-   convolution (3×3/5×5/7×7 kernels over a 50 % channel split) combined with a
-   cross-stage-partial structure.
-2. **MCAF** — fusion module replacing RepC3; the re-parameterised
+1. **MSPC** (Multi-Scale Partial Convolution) — lightweight backbone replacing the residual
+   blocks; multi-scale partial convolution (3×3/5×5/7×7 kernels over a 50 % channel split)
+   combined with a cross-stage-partial structure.
+2. **MCAF** (Multi-scale Context-Anchored Fusion) — fusion module replacing RepC3; the
+   re-parameterised
    RepNCSPELAN4 block of YOLOv9 followed by context anchor attention (CAA) from PKINet,
    whose serial `AvgPool → Conv1×1 → DConv_h → DConv_v → Conv1×1 → Sigmoid` path
    strengthens slender, continuous crack features.
-3. **LRPB-AIFI** — the AIFI encoder is replaced by a learnable continuous relative position
+3. **LRPB-AIFI** (Learnable Relative Position Bias for Attention-based Intra-scale Feature
+   Interaction) — the AIFI encoder is replaced by a learnable continuous relative position
    bias (LRPB): a small MLP maps relative coordinate offsets (Δx, Δy) to per-head scalar
    attention biases. The bias tables are built at runtime for the actual feature-map size,
    so 416×416 (S5 = 13×13), 640×640 (S5 = 20×20) and non-square inputs all work without

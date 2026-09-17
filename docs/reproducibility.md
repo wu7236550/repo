@@ -62,7 +62,7 @@ Consequences:
 * Classes: `nc: 2` (crack, pothole). The configuration files set `nc: 2` directly; the value
   is also overridden by `configs/roadrdd.yaml` at training time.
 * Input resolution: 416×416, letterbox-padded from 1920×1080 source frames.
-* The LRPB encoder originally pinned its position-bias tables to a 20×20 token grid, which is
+* The LRPB-AIFI encoder originally pinned its position-bias tables to a 20×20 token grid, which is
   the S5 size at 640×640 and is incompatible with the 13×13 grid produced at 416×416. The
   tables are now generated at runtime from the actual feature-map size
   (`LRPB_Attention._get_bias_tables`), so both resolutions and non-square inputs work. Behaviour

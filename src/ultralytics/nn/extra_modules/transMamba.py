@@ -261,7 +261,6 @@ class LayerNorm(nn.Module):
         return to_4d(self.body(to_3d(x)), h, w)
 
 
-
 class SpectralEnhancedFFN(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias):
         super(SpectralEnhancedFFN, self).__init__()
@@ -403,7 +402,6 @@ class Attention(nn.Module):
         attn_map = qkv  
         out = self.attn(qkv) 
         attn_map = out
-
 
 
         out = self.project_out(out)

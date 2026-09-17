@@ -165,7 +165,6 @@ class Rep_HGBlock(nn.Module):
         return y + x if self.add else y
 
 
-
 class DWR(nn.Module):
     def __init__(self, dim, act=True) -> None:
         super().__init__()
@@ -209,7 +208,6 @@ class C2f_DWR(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(DWR(self.c) for _ in range(n))
     
-
 
 def gram_schmidt(input):
     def projection(u, v):
@@ -408,7 +406,6 @@ class C2f_Ortho(C2f):
         self.m = nn.ModuleList(Bottleneck_Ortho(self.c, self.c, shortcut, g, k=(3, 3), e=1.0, height=height) for _ in range(n))
 
 
-
 class DCNv2(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1,
                  padding=None, groups=1, dilation=1, act=True, deformable_groups=1):
@@ -504,7 +501,6 @@ class BottleNeck_DCNv2(BottleNeck):
         super().__init__(ch_in, ch_out, stride, shortcut, act, variant)
         
         self.branch2b = DCNv2(ch_out, ch_out, 3, stride=stride, act=None)
-
 
 
 class DCNv2_Offset_Attention(nn.Module):
@@ -609,7 +605,6 @@ class BottleNeck_DCNv2_Dynamic(BottleNeck):
         self.branch2b = DCNv2_Dynamic(ch_out, ch_out, 3, stride=stride, act=None)
 
 
-
 class DCNV3_YOLO(nn.Module):
     def __init__(self, inc, ouc, k=1, s=1, p=None, g=1, d=1, act=True):
         super().__init__()
@@ -658,7 +653,6 @@ class BottleNeck_DCNv3(BottleNeck):
         super().__init__(ch_in, ch_out, stride, shortcut, act, variant)
         
         self.branch2b = DCNV3_YOLO(ch_out, ch_out, 3, s=stride, act=None)
-
 
 
 class iRMB(nn.Module):
@@ -1057,7 +1051,6 @@ class BottleNeck_iRMB_SWC(BottleNeck):
 		)
 
 
-
 class BasicBlock_Attention(nn.Module):
     expansion = 1
 
@@ -1224,7 +1217,6 @@ class BottleNeck_DySnakeConv(BottleNeck):
             DySnakeConv(ch_out, ch_out, act=nn.ReLU()), 
             Conv(ch_out * 3, ch_out, k=3, s=stride, g=ch_out, act=nn.ReLU())
         )
-
 
 
 class Partial_conv3(nn.Module):
@@ -1501,7 +1493,6 @@ class BottleNeck_Faster_Block_Rep_EMA(BottleNeck):
         )
 
 
-
 class AKConv(nn.Module):
     def __init__(self, inc, outc, num_param=5, stride=1, bias=None):
         super(AKConv, self).__init__()
@@ -1648,7 +1639,6 @@ class BottleNeck_AKConv(BottleNeck):
         self.branch2b = AKConv(ch_out, ch_out, stride=stride)
 
 
-
 class Bottleneck_RFAConv(Bottleneck):
 
     def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3), e=0.5):
@@ -1745,7 +1735,6 @@ class BottleNeck_RFCAConv(BottleNeck):
         super().__init__(ch_in, ch_out, stride, shortcut, act, variant)
         
         self.branch2b = RFCAConv(ch_out, ch_out, 3, stride=stride)
-
 
 
 class Conv3XC(nn.Module):
@@ -1881,7 +1870,6 @@ class Conv3XCC3(RepC3):
         super().__init__(c1, c2, n, e)
         c_ = int(c2 * e)
         self.m = nn.Sequential(*[Conv3XC(c_, c_) for _ in range(n)])
-
 
 
 class DilatedReparamBlock(nn.Module):
@@ -2113,7 +2101,6 @@ class DRBC3(RepC3):
         self.m = nn.Sequential(*[DilatedReparamBlock(c_, 5) for _ in range(n)])
 
 
-
 class DWR_DRB(nn.Module):
     def __init__(self, dim, act=True) -> None:
         super().__init__()
@@ -2197,7 +2184,6 @@ class BottleNeck_DeepDBB(BottleNeck):
         self.branch2b = DeepDiverseBranchBlock(ch_out, ch_out, kernel_size=3, stride=stride, act=act)
 
 
-
 class Bottleneck_DBB(Bottleneck):
     def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3), e=0.5):
         super().__init__(c1, c2, shortcut, g, k, e)
@@ -2221,7 +2207,6 @@ class DBBC3(RepC3):
         super().__init__(c1, c2, n, e)
         c_ = int(c2 * e)
         self.m = nn.Sequential(*[DiverseBranchBlock(c_, c_, 3) for _ in range(n)])
-
 
 
 class DualConv(nn.Module):
@@ -2270,7 +2255,6 @@ class BottleNeck_DualConv(BottleNeck):
         super().__init__(ch_in, ch_out, stride, shortcut, act, variant)
         
         self.branch2b = DualConv(ch_out, ch_out, stride=stride, g=4)
-
 
 
 class Zoom_cat(nn.Module):
@@ -2419,7 +2403,6 @@ class asf_attention_model(nn.Module):
         return x
 
 
-
 class GSConv(nn.Module):
     # GSConv https://github.com/AlanLi1997/slim-neck-by-gsconv
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
@@ -2480,7 +2463,6 @@ class VoVGSCSPC(VoVGSCSP):
         c_ = int(c2 * 0.5)
         self.gsb = GSBottleneckC(c_, c_, 1, 1)
         
-
 
 class BasicBlock_AggregatedAtt(nn.Module):
     expansion = 1
@@ -2565,7 +2547,6 @@ class BottleNeck_AggregatedAtt(nn.Module):
         out = self.act(out)
 
         return out
-
 
 
 class Bottleneck_AggregatedAttention(Bottleneck):
@@ -3004,7 +2985,6 @@ class AdvPoolFusion(nn.Module):
         return torch.cat([x1, x2], 1)
 
 
-
 try:
     from DCNv4.modules.dcnv4 import DCNv4
 except ImportError as e:
@@ -3056,7 +3036,6 @@ class BottleNeck_DCNv4(BottleNeck):
         super().__init__(ch_in, ch_out, stride, shortcut, act, variant)
         
         self.branch2b = DCNV4_YOLO(ch_out, ch_out, 3, s=stride, act=None)
-
 
 
 class ChannelAttention_HSFPN(nn.Module):
@@ -3173,7 +3152,6 @@ class Multiply(nn.Module):
         return x[0] * x[1]
 
 
-
 class DySample(nn.Module):
     def __init__(self, in_channels, scale=2, style='lp', groups=4, dyscope=False):
         super().__init__()
@@ -3250,7 +3228,6 @@ class DySample(nn.Module):
         return self.forward_lp(x)
 
 
-
 class CARAFE(nn.Module):
     def __init__(self, c, k_enc=3, k_up=5, c_mid=64, scale=2):
         super(CARAFE, self).__init__()
@@ -3281,7 +3258,6 @@ class CARAFE(nn.Module):
         return X
 
 
-
 class HWD(nn.Module):
     def __init__(self, in_ch, out_ch):
         super(HWD, self).__init__()
@@ -3298,7 +3274,6 @@ class HWD(nn.Module):
         x = self.conv(x)
 
         return x
-
 
 
 class Bottleneck_SWC(Bottleneck):
@@ -3334,7 +3309,6 @@ class BottleNeck_SWC(BottleNeck):
             ReparamLargeKernelConv(ch_out, ch_out, kernel_size, groups=(ch_out//16))
         )
         
-
 
 class Bottleneck_VSS(Bottleneck):
     def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3), e=0.5):
@@ -3378,7 +3352,6 @@ class BottleNeck_VSS(BottleNeck):
             nn.MaxPool2d(kernel_size=2, stride=2) if stride == 2 else nn.Identity(),
             VSSBlock(ch_out)
         )
-
 
 
 class RepConvN(nn.Module):
@@ -3608,7 +3581,6 @@ class ADown(nn.Module):
         return torch.cat((x1, x2), 1)
 
 
-
 class Fusion(nn.Module):
     def __init__(self, inc_list, fusion='bifpn') -> None:
         super().__init__()
@@ -3646,7 +3618,6 @@ class Fusion(nn.Module):
             return torch.sum(torch.stack([fusion_weight[i] * x[i] for i in range(len(x))], dim=0), dim=0)
         elif self.fusion == 'SDI':
             return self.SDI(x)
-
 
 
 class FGlo(nn.Module):
@@ -3750,7 +3721,6 @@ class BottleNeck_ContextGuided(BottleNeck):
         )
 
 
-
 class ParallelAtrousConv(nn.Module):
     def __init__(self, inc, ratio=[1, 2, 3]) -> None:
         super().__init__()
@@ -3823,7 +3793,6 @@ class AttentionDownsample(nn.Module):
         return output
 
 
-
 class DGSM(nn.Module):
     def __init__(self, c1, c2):
         super().__init__()
@@ -3893,7 +3862,6 @@ class DGCST2(nn.Module):
         return x + self.conv2(x)
 
 
-
 class RetBlockC3(RepC3):
     def __init__(self, c1, c2, n=3, e=1, retention='chunk', num_heads=8):
         super().__init__(c1, c2, n, e)
@@ -3945,8 +3913,6 @@ class C2f_RetBlock(C2f):
             y.append(layer(y[-1].permute(0, 2, 3, 1), None, self.retention == 'chunk', rel_pos).permute(0, 3, 1, 2))
         return self.cv2(torch.cat(y, 1))
     
-
-
 
 class GSiLU(nn.Module):
     def __init__(self):
@@ -4039,7 +4005,6 @@ class MCAF(nn.Module):
         return self.cv4(self.caa(torch.cat(y, 1)))
 
 
-
 class BasicBlock_FADC(BasicBlock):
     def __init__(self, ch_in, ch_out, stride, shortcut, act='relu', variant='d'):
         super().__init__(ch_in, ch_out, stride, shortcut, act, variant)
@@ -4071,7 +4036,6 @@ class C2f_FADC(C2f):
         self.m = nn.ModuleList(Bottleneck_FADC(self.c, self.c, shortcut, g, k=(3, 3), e=1.0) for _ in range(n))
 
 
-
 class FocusFeature(nn.Module):
     def __init__(self, inc, kernel_sizes=(5, 7, 9, 11), e=0.5) -> None:
         super().__init__()
@@ -4101,7 +4065,6 @@ class FocusFeature(nn.Module):
         return x
         
 
-
 class C3_PPA(C3):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
@@ -4112,7 +4075,6 @@ class C2f_PPA(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(PPA(self.c, self.c) for _ in range(n))
-
 
 
 class Cut(nn.Module):
@@ -4206,7 +4168,6 @@ class DRFD(nn.Module):
         x = self.fusion(x)
 
         return x
-
 
 
 class PSPModule(nn.Module):
@@ -4368,7 +4329,6 @@ class SFC_G2(nn.Module):
         return sp
 
 
-
 class SpatialAttention_CGA(nn.Module):
     def __init__(self):
         super(SpatialAttention_CGA, self).__init__()
@@ -4504,7 +4464,6 @@ class CAFMFusion(nn.Module):
         return result
 
 
-
 class RGCSPELAN(nn.Module):
     def __init__(self, c1, c2, n=1, scale=0.5, e=0.5):
         super(RGCSPELAN, self).__init__()
@@ -4532,7 +4491,6 @@ class RGCSPELAN(nn.Module):
         y.extend(m(y[-1]) for m in self.m)
         y.extend(self.cv4(y[-1]))
         return self.cv2(torch.cat(y, 1))
-
 
 
 class ConvolutionalGLU(nn.Module):
@@ -4635,7 +4593,6 @@ class BottleNeck_Faster_Block_CGLU(BottleNeck):
         )
 
 
-
 class SDFM(nn.Module):
 
     def __init__(self, channels=64, r=4):
@@ -4676,7 +4633,6 @@ class SDFM(nn.Module):
         w = self.sigmoid(local_w * global_w)
         xo = w * x1 + (1 - w) * x2
         return xo
-
 
 
 class GEFM(nn.Module):
@@ -4760,7 +4716,6 @@ class PSFM(nn.Module):
         return out
 
 
-
 class Star_Block(nn.Module):
     def __init__(self, dim, mlp_ratio=3, drop_path=0.):
         super().__init__()
@@ -4834,7 +4789,6 @@ class BottleNeck_Star(BottleNeck):
         )
 
 
-
 def choose_kan(name, c1, c2, k, s=1):
     if name == 'FastKANConv2DLayer':
         kan = FastKANConv2DLayer(c1, c2, kernel_size=k, stride=s, padding=k // 2)
@@ -4885,7 +4839,6 @@ class KANC3(RepC3):
         self.m = nn.Sequential(*[choose_kan(kan_name, c_, c_, 3) for _ in range(n)])
 
 
-
 class ContextGuideFusionModule(nn.Module):
     def __init__(self, inc) -> None:
         super().__init__()
@@ -4907,7 +4860,6 @@ class ContextGuideFusionModule(nn.Module):
         x1_weight = x1 * x1_weight
         return torch.cat([x0 + x1_weight, x1 + x0_weight], dim=1)
         
-
 
 class Bottleneck_DEConv(Bottleneck):
 
@@ -4943,7 +4895,6 @@ class BottleNeck_DEConv(BottleNeck):
         )
 
 
-
 class SMPCGLU(nn.Module):
     def __init__(self,
                  inc,
@@ -4975,7 +4926,6 @@ class C2f_SMPCGLU(C2f):
     def __init__(self, c1, c2, n=1, kernel_size=13, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(SMPCGLU(self.c, kernel_size) for _ in range(n))
-
 
 
 class Mlp_Heat(nn.Module):
@@ -5171,7 +5121,6 @@ class C2f_Heat(C2f):
         self.m = nn.ModuleList(HeatBlock(self.c, feat_size) for _ in range(n))
 
 
-
 def Upsample(x, size, align_corners = False):
     return nn.functional.interpolate(x, size=size, mode='bilinear', align_corners=align_corners)
 
@@ -5209,7 +5158,6 @@ class SBA(nn.Module):
         H_feature = Upsample(H_feature, size = L_feature.size()[2:])
         out = self.conv(torch.cat([H_feature, L_feature], dim=1))
         return out
-
 
 
 class PSA_Attention(nn.Module):
@@ -5261,7 +5209,6 @@ class PSA(nn.Module):
         return self.cv2(torch.cat((a, b), 1))
 
 
-
 class WaveletPool(nn.Module):
     def __init__(self):
         super(WaveletPool, self).__init__()
@@ -5301,7 +5248,6 @@ class WaveletUnPool(nn.Module):
         filters = torch.cat([self.weight, ] * C, dim=0)
         y = F.conv_transpose2d(x, filters, groups=C, stride=2)
         return y
-
 
 
 class MHSA_CGLU(nn.Module):
@@ -5360,7 +5306,6 @@ class CSP_PTB(nn.Module):
         y = list(self.cv1(x).split((self.c, self.c), 1))
         y.extend(m(y[-1]) for m in self.m)
         return self.cv2(torch.cat(y, 1))
-
 
 
 class ContextBlock(nn.Module):
@@ -5554,7 +5499,6 @@ class GLSA(nn.Module):
         return x
 
 
-
 class SPDConv(nn.Module):
     def __init__(self, inc, ouc, dimension=1):
         super().__init__()
@@ -5565,7 +5509,6 @@ class SPDConv(nn.Module):
         x = torch.cat([x[..., ::2, ::2], x[..., 1::2, ::2], x[..., ::2, 1::2], x[..., 1::2, 1::2]], 1)
         x = self.conv(x)
         return x
-
 
 
 class FGM(nn.Module):
@@ -5648,7 +5591,6 @@ class CSPOmniKernel(nn.Module):
         return self.cv2(torch.cat((self.m(ok_branch), identity), 1))
 
 
-
 class BasicBlock_WTConv(BasicBlock):
     def __init__(self, ch_in, ch_out, stride, shortcut, act='relu', variant='d'):
         super().__init__(ch_in, ch_out, stride, shortcut, act, variant)
@@ -5660,7 +5602,6 @@ class BottleNeck_WTConv(BottleNeck):
         super().__init__(ch_in, ch_out, stride, shortcut, act, variant)
         
         self.branch2b = WTConv2d(ch_out, ch_out, stride=stride)
-
 
 
 class PyramidPoolAgg_PCE(nn.Module):
@@ -5810,8 +5751,6 @@ class DynamicInterpolationFusion(nn.Module):
         return x[0] + self.conv(F.interpolate(x[1], size=x[0].size()[2:], mode='bilinear', align_corners=False))
         
 
-
-
 class DMlp(nn.Module):
     def __init__(self, dim, growth_rate=2.0):
         super().__init__()
@@ -5899,8 +5838,6 @@ class C2f_FMB(C2f):
         self.m = nn.ModuleList(FMB(self.c) for _ in range(n))
     
 
-
-
 class gConvBlock(nn.Module):
 	def __init__(self, dim, kernel_size=3, gate_act=nn.Sigmoid, net_depth=8):
 		super().__init__()
@@ -5948,7 +5885,6 @@ class C2f_gConv(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(gConvBlock(self.c) for _ in range(n))
-
 
 
 class LDConv(nn.Module):
@@ -6065,7 +6001,6 @@ class LDConv(nn.Module):
         
         x_offset = rearrange(x_offset, 'b c h w n -> b c (h n) w')
         return x_offset
-
 
 
 class Mlp_CASVIT(nn.Module):
@@ -6414,7 +6349,6 @@ class C2f_MSMHSA_CGLU(C2f):
         self.m = nn.ModuleList(MSMHSA_CGLU(self.c) for _ in range(n))
 
 
-
 class MSPConv(nn.Module):
     def __init__(self, inc) -> None:
         super().__init__()
@@ -6440,7 +6374,6 @@ class MSPC(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         
         self.m = nn.ModuleList(MSPConv(self.c) for _ in range(n))
-
 
 
 class ElementScale(nn.Module):
@@ -6687,8 +6620,6 @@ class C2f_MogaBlock(C2f):
         self.m = nn.ModuleList(MogaBlock(self.c) for _ in range(n))
 
 
-######################################## SHViT CVPR2024 start ########################################
-
 class Conv2d_BN(torch.nn.Sequential):
     def __init__(self, a, b, ks=1, stride=1, pad=0, dilation=1,
                  groups=1, bn_weight_init=1, resolution=-10000):
@@ -6869,8 +6800,6 @@ class C2f_SHSA_EPGO_CGLU(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(SHSABlock_EPGO_CGLU(self.c) for _ in range(n))
-
-######################################## SHViT CVPR2024 end ########################################
 
 
 class Modulator(nn.Module):
@@ -7070,7 +6999,6 @@ class C2f_SMAFB_CGLU(C2f):
         self.m = nn.ModuleList(SMAFormerBlock_CGLU(self.c) for _ in range(n))
 
 
-
 class DynamicAlignFusion(nn.Module):
     def __init__(self, inc, ouc) -> None:
         super().__init__()
@@ -7104,7 +7032,6 @@ class DynamicAlignFusion(nn.Module):
             data.abs_().clamp_(value)
             data*=sign
     
-
 
 class EdgeEnhancer(nn.Module):
     def __init__(self, in_dim):
@@ -7181,7 +7108,6 @@ class CSP_MutilScaleEdgeInformationSelect(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(MutilScaleEdgeInformationSelect(self.c, [3, 6, 9, 12]) for _ in range(n))
         
-
 
 class FourierUnit(nn.Module):
 
@@ -7312,8 +7238,6 @@ class C2f_FFCM(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(Fused_Fourier_Conv_Mixer(self.c) for _ in range(n))
 
-
-######################################## SFHformer ECCV2024 start ########################################
 
 class SFHF_FFN(nn.Module):
     def __init__(
@@ -7474,7 +7398,6 @@ class SFHF_Mixer(nn.Module):
         )
 
 
-
     def forward(self, x):
         x = self.conv_init(x)
         x = list(torch.split(x, self.dim, dim=1))
@@ -7484,7 +7407,6 @@ class SFHF_Mixer(nn.Module):
         x = self.gelu(x)
         x = self.ca(x) * x
         x = self.ca_conv(x)
-
 
 
         return x
@@ -7524,9 +7446,6 @@ class C2f_SFHF(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(SFHF_Block(self.c) for _ in range(n))
-
-
-######################################## SFHformer ECCV2024 end ########################################
 
 
 class ScharrConv(nn.Module):
@@ -7605,7 +7524,6 @@ class CSP_FreqSpatial(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(FreqSpatial(self.c) for _ in range(n))
-
 
 
 class DeepPoolLayer(nn.Module):
@@ -7760,7 +7678,6 @@ class C2f_MSM(C2f):
         self.m = nn.ModuleList(DeepPoolLayer(self.c) for _ in range(n))
 
 
-
 class CAB(nn.Module):
     def __init__(self, nc, reduction=8, bias=False):
         super(CAB, self).__init__()
@@ -7899,7 +7816,6 @@ class C2f_RAB(C2f):
         self.m = nn.ModuleList(RAB(self.c, self.c) for _ in range(n))
 
 
-
 class MeanShift(nn.Conv2d):
     def __init__(
         self, rgb_range,
@@ -8006,7 +7922,6 @@ class LFEC3(RepC3):
         self.m = nn.Sequential(*[LFE(c_, c_) for _ in range(n)])
 
 
-
 class SobelConv(nn.Module):
     def __init__(self, channel) -> None:
         super().__init__()
@@ -8055,7 +7970,6 @@ class ConvEdgeFusion(nn.Module):
         x = torch.cat(x, dim=1)
         x = self.conv_1x1(self.conv_3x3_feature_extract(self.conv_channel_fusion(x)))
         return x
-
 
 
 def img2windows(img, H_sp, W_sp):
@@ -8112,7 +8026,6 @@ class ChannelProjection(nn.Module):
         ci2 = self.CI2(x)
         out = self.pro_out(res * ci1 * ci2)
         return out
-
 
 
 class SpatialProjection(nn.Module):
@@ -8545,12 +8458,10 @@ class C2f_FCA(C2f):
         self.m = nn.ModuleList(FCA(self.c, reso=reso) for _ in range(n))
 
 
-
 class C2f_CAMixer(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(CAMixer(self.c, window_size=4) for _ in range(n))
-
 
 
 class MANet(nn.Module):
@@ -8641,7 +8552,6 @@ class HyperComputeModule(nn.Module):
         x = self.act(self.bn(x))
 
         return x
-
 
 
 def num_trainable_params(model):
@@ -8788,8 +8698,6 @@ class MultiScaleGatedAttn(nn.Module):
     return y
 
 
-######################################## ICCV2023 CRAFT start ########################################
-
 class HFERB(nn.Module):
     def __init__(self, dim) -> None:
         super().__init__()
@@ -8820,18 +8728,12 @@ class C2f_HFERB(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(HFERB(self.c) for _ in range(n))
 
-######################################## ICCV2023 CRAFT end ########################################
-
-######################################## AAAI2025 Rethinking Transformer-Based Blind-Spot Network for Self-Supervised Image Denoising start ########################################
 
 class C2f_DTAB(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(DTAB(self.c) for _ in range(n))
 
-######################################## AAAI2025 Rethinking Transformer-Based Blind-Spot Network for Self-Supervised Image Denoising end ########################################
-
-######################################## ECCV2024 Frequency-Spatial Entanglement Learning for Camouflaged Object Detection start ########################################
 
 class JDPM(nn.Module):
     def __init__(self, channels):
@@ -9044,9 +8946,6 @@ class C2f_ETB(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(ETB(self.c) for _ in range(n))
 
-######################################## ECCV2024 Frequency-Spatial Entanglement Learning for Camouflaged Object Detection end ########################################
-
-######################################## ACMMM2024 Efficient Face Super-Resolution via Wavelet-based Feature Enhancement Network start ########################################
 
 class GSA(nn.Module):
     def __init__(self, channels, num_heads=8, bias=False):
@@ -9257,8 +9156,6 @@ class WFU(nn.Module):
         out = self.InverseHaarWavelet(torch.cat([hvd, a_], dim=1), rev=True)
         return out
 
-######################################## ACMMM2024 Efficient Face Super-Resolution via Wavelet-based Feature Enhancement Network end ########################################
-
 
 class PSConv(nn.Module):  
     
@@ -9296,7 +9193,6 @@ class C2f_AP(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(APBottleneck(self.c, self.c, shortcut, g, k=(3, 3), e=e) for _ in range(n))
-
 
 
 class HaarWaveletConv(nn.Module):
@@ -9421,7 +9317,6 @@ class ContrastDrivenFeatureAggregation(nn.Module):
         return x_weighted
 
 
-
 class ELGCA_MLP(nn.Module):
     def __init__(self, dim, mlp_ratio=4):
         super().__init__()
@@ -9535,7 +9430,6 @@ class C2f_ELGCA_CGLU(C2f):
         self.m = nn.ModuleList(ELGCA_CGLU(self.c) for _ in range(n))
         
 
-
 class StripMlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
         super().__init__()
@@ -9637,7 +9531,6 @@ class C2f_StripCGLU(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(StripCGLU(self.c) for _ in range(n))
-
 
 
 class MultiScalePCA(nn.Module):
@@ -10105,7 +9998,6 @@ class C2f_DCMB_KAN(C2f):
         self.m = nn.ModuleList(DynamicCIncMixerBlock_KAN(self.c) for _ in range(n))
         
 
-
 class GlobalFilter(nn.Module):
     def __init__(self, dim, size):
         super().__init__()
@@ -10139,7 +10031,6 @@ class C2f_GlobalFilter(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(GlobalFilterBlock(self.c, size=size) for _ in range(n))
         
-
 
 def resize_complex_weight(origin_weight, new_h, new_w):
     h, w, num_heads = origin_weight.shape[0:3]
@@ -10250,7 +10141,6 @@ class C2f_DynamicFilter(C2f):
             ) for _ in range(n))
 
 
-
 class HAFB(nn.Module):
     def __init__(self, inc, ouc, group=False):
         super(HAFB, self).__init__()
@@ -10282,16 +10172,11 @@ class HAFB(nn.Module):
         return self.conv_final(self.rep_conv(self.conv_squeeze(torch.cat([x1, x2, bp], 1))))
 
 
-######################################## CVPR2025 SCSegamba start ########################################
-
 class C2f_SAVSS(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(SAVSS_Layer(self.c) for _ in range(n))
 
-######################################## CVPR2025 SCSegamba end ########################################
-
-######################################## CVPR2025 MambaOut end ########################################
 
 class C2f_MambaOut(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
@@ -10329,9 +10214,6 @@ class C2f_MambaOut_UniRepLK(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(GatedUniRepLKBlock_BCHW(self.c) for _ in range(n))
 
-######################################## CVPR2025 MambaOut end ########################################
-
-######################################## CVPR2025 EfficientViM start ########################################
 
 class C2f_EfficientVIM(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
@@ -10342,10 +10224,6 @@ class C2f_EfficientVIM_CGLU(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(EfficientViMBlock_CGLU(self.c) for _ in range(n))
-
-######################################## CVPR2025 EfficientViM end ########################################
-
-######################################## CVPR2025 BHViT start ########################################
 
 
 class Shift_channel_mix(nn.Module):
@@ -10464,9 +10342,6 @@ class CSP_MSCB_SC(C2f):
         
         self.m = nn.ModuleList(MSCB_SC(self.c, self.c, kernel_sizes=kernel_sizes) for _ in range(n))
 
-######################################## CVPR2025 BHViT end ########################################
-
-######################################## CVPR2025 HVI start ########################################
 
 class CrossAttentionBlock(nn.Module):
     def __init__(self, dim, num_heads=8, bias=True):
@@ -10549,43 +10424,29 @@ class IELC3(RepC3):
         c_ = int(c2 * e)
         self.m = nn.Sequential(*[IEL(c_) for _ in range(n)])
 
-######################################## CVPR2025 HVI end ########################################
-
-######################################## CVPR2025 OverLoCK start ########################################
 
 class C2f_RCB(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(RepConvBlock(self.c) for _ in range(n))
 
-######################################## CVPR2025 OverLoCK end ########################################
-        
-######################################## ICLR2024 FTIC start ########################################
         
 class C2f_FAT(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(FAT_Block(self.c) for _ in range(n))
 
-######################################## ICLR2024 FTIC end ########################################
         
-######################################## CVPR2024 DCMPNet start ########################################
-
 class C2f_LEGM(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(LEGM(self.c) for _ in range(n))
 
-######################################## CVPR2024 DCMPNet end ########################################
-        
-######################################## CVPR2025 MobileMamba start ########################################
         
 class C2f_MobileMamba(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(MobileMambaBlock(self.c) for _ in range(n))
-
-######################################## CVPR2025 MobileMamba end ########################################
 
 
 class Conv_Extra(nn.Module):
@@ -10784,16 +10645,11 @@ class LoGStem(nn.Module):
         return x
 
     
-######################################## WACV2025-SEMNet start ########################################
-
 class C2f_SBSM(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(SBSM(self.c) for _ in range(n))
 
-######################################## WACV2025-SEMNet end ########################################
-        
-######################################## CVPR2025-LSNet start ########################################
         
 class C2f_LSBlock(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
@@ -10831,25 +10687,18 @@ class C2f_MambaOut_LSConv(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(GatedLSConvBlock_BCHW(self.c) for _ in range(n))
 
-######################################## CVPR2025-LSNet end ########################################
 
-        
 class C2f_TransMamba(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(TransMambaBlock(self.c) for _ in range(n))
 
         
-######################################## CVPR2025 EVSSM start ########################################
-
 class C2f_EVS(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(EVS(self.c) for _ in range(n))
 
-######################################## CVPR2025 EVSSM end ########################################
-        
-######################################## CVPR2025 DarkIR start ########################################
         
 class C2f_EBlock(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
@@ -10861,10 +10710,7 @@ class C2f_DBlock(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(DBlock(self.c) for _ in range(n))
 
-######################################## CVPR2025 DarkIR end ########################################
         
-######################################## CVPR2025 Frequency Dynamic Convolution for Dense Image Prediction start ########################################
-
 class Bottleneck_FDConv(Bottleneck):
     def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3), e=0.5):
         super().__init__(c1, c2, shortcut, g, k, e)
@@ -11019,8 +10865,6 @@ class FDConvC3(RepC3):
             x = self.conv_s2(x)
         return self.cv3(self.m(self.cv1(x)) + self.cv2(x))
 
-######################################## CVPR2025 Frequency Dynamic Convolution for Dense Image Prediction end ########################################
-
 
 class C2f_DSAN(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
@@ -11075,16 +10919,11 @@ class C2f_DSA(C2f):
         self.m = nn.ModuleList(Bottleneck_DSA(self.c, self.c, shortcut, g, e=1.0) for _ in range(n))
 
 
-######################################## CVPR2025 MaIR start ########################################
-
 class C2f_RMB(C2f):
     def __init__(self, c1, c2, n=1, size=None, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(RMB(self.c, size, shift_size=(0 if _ % 2 == 0 else 2)) for _ in range(n))
 
-######################################## CVPR2025 MaIR end ########################################
-
-######################################## ECCV2024 RethinkingFPN end ########################################
 
 class SNI(nn.Module):
     def __init__(self, up_f=2):
@@ -11115,9 +10954,6 @@ class GSConvE(nn.Module):
         y = y.permute(0, 2, 1, 3, 4)
         return y.reshape(y.shape[0], -1, y.shape[3], y.shape[4])
 
-######################################## ECCV2024 RethinkingFPN end ########################################
-
-######################################## CVPR2024 Unleashing Channel Potential: Space-Frequency Selection Convolution for SAR Object Detection start ########################################
 
 class Bottleneck_SFSConv(Bottleneck):
     def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3), e=0.5):
@@ -11260,10 +11096,7 @@ class C2f_FasterSFSConv(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(FasterSFSConv(self.c, self.c) for _ in range(n))
 
-######################################## CVPR2024 Unleashing Channel Potential: Space-Frequency Selection Convolution for SAR Object Detection end ########################################
         
-######################################## CVPR2025 GroupMamba start ########################################
-
 class C2f_GroupMamba(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
@@ -11274,18 +11107,12 @@ class C2f_GroupMambaBlock(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(Block_mamba(self.c) for _ in range(n))
 
-######################################## CVPR2025 GroupMamba end ########################################
         
-######################################## CVPR2025 MambaVision start ########################################
-
 class C2f_MambaVision(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(MambaVisionBlock(self.c) for _ in range(n))
 
-######################################## CVPR2025 MambaVision end ########################################
-
-######################################## AAAI2025 FCM start ########################################
 
 class Channel(nn.Module):
     def __init__(self, dim):
@@ -11443,8 +11270,6 @@ class Pzconv(nn.Module):
         x6 = x5 + x
         return x6
 
-######################################## AAAI2025 FCM end ########################################
-
 
 class PSAttn(nn.Module):
 
@@ -11578,7 +11403,6 @@ class PST(nn.Module):
         return y
 
     
-
 def complexinit(weights_real, weights_imag, criterion):
     output_chs, input_chs, num_rows, num_cols = weights_real.shape
     fan_in = input_chs
@@ -11644,7 +11468,6 @@ class C2f_FourierConv(C2f):
         self.m = nn.ModuleList(Bottleneck_FourierConv(self.c, self.c, shortcut=shortcut, g=g, size=size, e=e) for _ in range(n))
 
 
-
 class wConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, den, stride=1, padding=1, groups=1, dilation=1, bias=False):
         super(wConv2d, self).__init__()       
@@ -11682,16 +11505,11 @@ class C2f_wConv(C2f):
         self.m = nn.ModuleList(Bottleneck_wConv(self.c, self.c, shortcut=shortcut, g=g, den=den, e=e) for _ in range(n))
 
 
-######################################## TGRS2025 UMFormer start ########################################
-
 class C2f_GLVSS(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(GL_VSS(self.c, self.c) for _ in range(n))
 
-######################################## TGRS2025 UMFormer end ########################################
-
-######################################## ICCV2025 ESCBlock end ########################################
 
 class C2f_ESC(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
@@ -11709,9 +11527,6 @@ class C2f_ConvAttn(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(Bottleneck_ConvAttn(self.c, self.c) for _ in range(n))
 
-######################################## ICCV2025 ESCBlock end ########################################
-
-######################################## ICCV2025 MobileIE start ########################################
 
 class MBRConv3(nn.Module):
     def __init__(self, in_channels, out_channels, rep_scale=4):
@@ -12060,25 +11875,17 @@ class MBRConv5C3(RepC3):
         c_ = int(c2 * e)
         self.m = nn.Sequential(*[MBRConv5(c_, c_) for _ in range(n)])
 
-######################################## ICCV2025 MobileIE end ########################################
         
-######################################## ICCV2025 VSSD start ########################################
-
 class C2f_VSSD(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(VMAMBA2Block(self.c) for _ in range(n))
 
-######################################## ICCV2025 VSSD end ########################################
         
-######################################## ICCV2025 TinyVIM start ########################################
-
 class C2f_TVIM(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(TViMBlock(self.c) for _ in range(n))
-
-######################################## ICCV2025 TinyVIM end ########################################
 
 
 class AdaptiveCombiner(nn.Module):
@@ -12125,26 +11932,18 @@ class C2f_CSI(C2f):
         self.m = nn.ModuleList(CSI(self.c) for _ in range(n))
 
         
-######################################## ICCV2025 UniConvNet start ########################################
-
 class C2f_UniConvBlock(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(UniConvBlock(self.c) for _ in range(n))
 
-######################################## ICCV2025 UniConvNet end ########################################
-        
-######################################## ICCV2025 UniConvNet start ########################################
         
 class C2f_LGLB(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(LGLBlock(self.c) for _ in range(n))
         
-######################################## ICCV2025 UniConvNet end ########################################
         
-######################################## ICCV2025 ConverseNet start ########################################
-
 class C2f_ConverseB(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
@@ -12168,10 +11967,7 @@ class Converse2DC3(RepC3):
         c_ = int(c2 * e)
         self.m = nn.Sequential(*[Converse2D(c_, c_, 3) for _ in range(n)])
 
-######################################## ICCV2025 ConverseNet end ########################################
         
-######################################## CVPR2025 GCConv start ########################################
-
 class Bottleneck_GCConv(Bottleneck):
     def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3), e=0.5):
         super().__init__(c1, c2, shortcut, g, k, e)
@@ -12190,16 +11986,11 @@ class GCConvC3(RepC3):
         c_ = int(c2 * e)
         self.m = nn.Sequential(*[GCConv(c_, c_, 3) for _ in range(n)])
 
-######################################## CVPR2025 GCConv end ########################################
         
-######################################## AAAI2024 CFBlock start ########################################
-
 class C2f_CFBlock(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(CFBlock(self.c, self.c) for _ in range(n))
-
-######################################## AAAI2024 CFBlock end ########################################
 
 
 class C2f_FMABlock(C2f):
@@ -12208,15 +11999,12 @@ class C2f_FMABlock(C2f):
         self.m = nn.ModuleList(FMABlock(self.c) for _ in range(n))
 
         
-
 class C2f_LWGA(C2f):
     def __init__(self, c1, c2, n=1, stage=None, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(LWGA_Block(self.c, stage=stage) for _ in range(n))
 
         
-######################################## TGRS2025 ASCNet start ########################################
-
 class C2f_CSSC(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
@@ -12227,25 +12015,19 @@ class C2f_CNCM(C2f):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(CNCM(self.c) for _ in range(n))
 
-######################################## TGRS2025 ASCNet end ########################################
         
-######################################## ICCV2025 CWNet start ########################################
-
 class C2f_HFRB(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(HFRB(self.c) for _ in range(n))
 
-######################################## ICCV2025 CWNet end ########################################
         
-
 class C2f_EVA(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(EVA(self.c) for _ in range(n))
 
         
-
 class Bottleneck_RepMBConv(nn.Module):
 
     def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3), e=0.5):

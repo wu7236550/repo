@@ -107,7 +107,6 @@ class Attention_org(nn.Module):
         self.proj_dropout = Dropout(0.1)
 
 
-
     def forward(self, emb1,emb2,emb3,emb4, emb_all):
         multi_head_Q1_list = []
         multi_head_Q2_list = []
@@ -202,8 +201,6 @@ class Attention_org(nn.Module):
         O3 = self.proj_dropout(O3) if emb3 is not None else None
         O4 = self.proj_dropout(O4) if emb4 is not None else None
         return O1,O2,O3,O4, weights
-
-
 
 
 class Mlp(nn.Module):

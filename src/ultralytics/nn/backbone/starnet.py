@@ -82,7 +82,6 @@ class StarNet(nn.Module):
         return features
 
 
-
 def starnet_s1(pretrained=False, **kwargs):
     model = StarNet(24, [2, 2, 8, 3], **kwargs)
     if pretrained:
@@ -90,7 +89,6 @@ def starnet_s1(pretrained=False, **kwargs):
         checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu")
         model.load_state_dict(checkpoint["state_dict"], strict=False)
     return model
-
 
 
 def starnet_s2(pretrained=False, **kwargs):
@@ -102,7 +100,6 @@ def starnet_s2(pretrained=False, **kwargs):
     return model
 
 
-
 def starnet_s3(pretrained=False, **kwargs):
     model = StarNet(32, [2, 2, 8, 4], **kwargs)
     if pretrained:
@@ -110,7 +107,6 @@ def starnet_s3(pretrained=False, **kwargs):
         checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu")
         model.load_state_dict(checkpoint["state_dict"], strict=False)
     return model
-
 
 
 def starnet_s4(pretrained=False, **kwargs):
@@ -127,10 +123,8 @@ def starnet_s050(pretrained=False, **kwargs):
     return StarNet(16, [1, 1, 3, 1], 3, **kwargs)
 
 
-
 def starnet_s100(pretrained=False, **kwargs):
     return StarNet(20, [1, 2, 4, 1], 4, **kwargs)
-
 
 
 def starnet_s150(pretrained=False, **kwargs):

@@ -128,7 +128,6 @@ class SEModule(nn.Module):
         return x
 
 
-
 class LayerScale(nn.Module):
     def __init__(self, dim, init_value=1e-5):
         super().__init__()
@@ -168,7 +167,6 @@ class GRN(nn.Module):
         else:
             return (self.gamma * Nx + 1) * x
     
-
 
 class DilatedReparamBlock(nn.Module):
     def __init__(self, channels, kernel_size, deploy, use_sync_bn=False, attempt_use_lk_impl=True):

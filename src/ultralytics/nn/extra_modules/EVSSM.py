@@ -257,7 +257,6 @@ class SS2D(nn.Module):
         return out
 
 
-
 class EVS(nn.Module):
     def __init__(self, dim, ffn_expansion_factor=3, bias=False, LayerNorm_type='WithBias', att=True, idx=3, patch=80):
         super(EVS, self).__init__()

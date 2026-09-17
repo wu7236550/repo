@@ -352,7 +352,6 @@ def test_speed():
     TIMES = 100
     import selective_scan_cuda_core
     import selective_scan_cuda
-    # copied from test_selective_scan ======================
     torch.random.manual_seed(0)
     is_complex = wtype == torch.complex64
     A = (-0.5 * torch.rand(dim, dstate, device=device, dtype=wtype)).requires_grad_()

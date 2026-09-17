@@ -294,7 +294,6 @@ class UniRepLKNetBlock(nn.Module):
             self.pwconv2 = nn.Sequential(new_linear, self.pwconv2[1])
 
 
-
 default_UniRepLKNet_A_F_P_kernel_sizes = ((3, 3),
                                       (13, 13),
                                       (13, 13, 13, 13, 13, 13),
@@ -420,7 +419,6 @@ class UniRepLKNet(nn.Module):
         for m in self.modules():
             if hasattr(m, 'reparameterize'):
                 m.reparameterize()
-
 
 
 class LayerNorm(nn.Module):

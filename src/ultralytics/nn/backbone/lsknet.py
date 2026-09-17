@@ -55,7 +55,6 @@ class LSKblock(nn.Module):
         return x * attn
 
 
-
 class Attention(nn.Module):
     def __init__(self, d_model):
         super().__init__()

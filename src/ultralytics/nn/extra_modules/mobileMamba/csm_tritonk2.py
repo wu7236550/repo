@@ -339,7 +339,6 @@ class CrossMergeF(torch.autograd.Function):
         return x, None, None, None, None
 
 
-
 try:
     @triton.jit
     def triton_cross_scan_flex_k2(
@@ -840,7 +839,4 @@ class CHECK:
 
 if __name__ == "__main__":
     CHECK.check_csm_triton()
-
-
-
 

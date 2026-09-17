@@ -213,7 +213,6 @@ class FreqFusion(nn.Module):
         return hr_feat + lr_feat
 
 
-
 class LocalSimGuidedSampler(nn.Module):
     def __init__(self, in_channels, scale=2, style='lp', groups=4, use_direct_scale=True, kernel_size=1, local_window=3, sim_type='cos', norm=True, direction_feat='sim_concat'):
         super().__init__()

@@ -379,8 +379,6 @@ class Ensemble(nn.ModuleList):
         return y, None
 
 
-
-
 @contextlib.contextmanager
 def temporary_modules(modules=None):
     if not modules:

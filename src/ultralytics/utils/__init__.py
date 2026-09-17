@@ -592,7 +592,6 @@ def url2file(url):
     return Path(clean_url(url)).name
 
 
-
 PREFIX = colorstr('Ultralytics: ')
 SETTINGS = SettingsManager()
 DATASETS_DIR = Path(SETTINGS['datasets_dir'])

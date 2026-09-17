@@ -450,4 +450,3 @@ def test_selective_scan(is_variable_B, is_variable_C, varBC_groups, has_D, has_z
     if has_delta_bias:
         assert torch.allclose(delta_bias.grad, delta_bias_ref.grad, rtol=rtolw, atol=atolw)
 
-

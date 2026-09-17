@@ -261,7 +261,6 @@ class CrossMergeF(torch.autograd.Function):
         return x, None, None, None, None
 
 
-
 try:
     @triton.jit
     def triton_cross_scan_flex(
@@ -482,7 +481,6 @@ def cross_merge_fn(y: torch.Tensor, in_channel_first=True, out_channel_first=Tru
     return CMF.apply(y, in_channel_first, out_channel_first, one_by_one, scans)
 
 
-
 class CHECK:
     def check_csm_triton():
         B, C, H, W = 2, 192, 56, 57
@@ -601,7 +599,4 @@ class CHECK:
 
 if __name__ == "__main__":
     CHECK.check_csm_triton()
-
-
-
 

@@ -4,7 +4,6 @@ from pycocotools.cocoeval import COCOeval
 from tidecv import TIDE, datasets
 
 
-
 def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--anno_json', type=str, default='data.json', help='training model path')

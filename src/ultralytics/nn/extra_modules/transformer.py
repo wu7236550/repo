@@ -226,7 +226,6 @@ class TransformerEncoderLayer_LocalWindowAttention(nn.Module):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
 
-
 class LearnedPositionalEncoding(nn.Module):
     def __init__(self, max_position_embeddings, embedding_dim, seq_length):
         super(LearnedPositionalEncoding, self).__init__()
@@ -273,8 +272,6 @@ class AIFI_LPE(TransformerEncoderLayer):
         return torch.cat([torch.sin(out_w), torch.cos(out_w), torch.sin(out_h), torch.cos(out_h)], 1)[None]
 
 
-
-
 class TransformerEncoderLayer_DAttention(nn.Module):
 
     def __init__(self, c1, cm=2048, num_heads=8, dropout=0.0, act=nn.GELU(), normalize_before=False):
@@ -302,7 +299,6 @@ class TransformerEncoderLayer_DAttention(nn.Module):
 
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
-
 
 
 class TransformerEncoderLayer_HiLo(nn.Module):
@@ -334,7 +330,6 @@ class TransformerEncoderLayer_HiLo(nn.Module):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
 
-
 class TransformerEncoderLayer_EfficientAdditiveAttnetion(nn.Module):
 
     def __init__(self, c1, cm=2048, num_heads=8, dropout=0.0, act=nn.GELU(), normalize_before=False):
@@ -362,7 +357,6 @@ class TransformerEncoderLayer_EfficientAdditiveAttnetion(nn.Module):
 
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
-
 
 
 class TransformerEncoderLayer_RepBN(TransformerEncoderLayer):
@@ -397,7 +391,6 @@ class AIFI_RepBN(TransformerEncoderLayer_RepBN):
         out_h = grid_h.flatten()[..., None] @ omega[None]
 
         return torch.cat([torch.sin(out_w), torch.cos(out_w), torch.sin(out_h), torch.cos(out_h)], 1)[None]
-
 
 
 class SpatialOperation(nn.Module):
@@ -478,7 +471,6 @@ class TransformerEncoderLayer_AdditiveTokenMixer(nn.Module):
 
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
-
 
 
 class MutilScal(nn.Module):
@@ -594,7 +586,6 @@ class TransformerEncoderLayer_MSMHSA(nn.Module):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
 
-
 class Attention_histogram(nn.Module):
     def __init__(self, dim, num_heads=8, bias=False, ifBox=True):
         super(Attention_histogram, self).__init__()
@@ -702,7 +693,6 @@ class TransformerEncoderLayer_DHSA(nn.Module):
 
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
-
 
 
 class LRPB(nn.Module):
@@ -859,8 +849,6 @@ class LRPB_AIFI(nn.Module):
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
-
-######################################## ICLR2025 PolaFormer start ########################################
 
 class PolaLinearAttention(nn.Module):
     def __init__(self, dim, hw, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0., sr_ratio=1,
@@ -1043,9 +1031,6 @@ class TransformerEncoderLayer_Pola_FMFFN(TransformerEncoderLayer_Pola_CGLU):
 
         self.ffn = FMFFN(c1, cm, c1)
 
-######################################## ICLR2025 PolaFormer end ########################################
-
-######################################## ICLR2025 Token Statistics Transformer start ########################################
 
 class TransformerEncoderLayer_TSSA(nn.Module):
 
@@ -1076,9 +1061,6 @@ class TransformerEncoderLayer_TSSA(nn.Module):
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
-######################################## ICLR2025 Token Statistics Transformer end ########################################
-
-######################################## CVPR2024 Adapt or Perish: Adaptive Sparse Transformer with Attentive Feature Refinement for Image Restoration start ########################################
 
 class TransformerEncoderLayer_ASSA(nn.Module):
 
@@ -1109,10 +1091,7 @@ class TransformerEncoderLayer_ASSA(nn.Module):
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
-######################################## CVPR2024 Adapt or Perish: Adaptive Sparse Transformer with Attentive Feature Refinement for Image Restoration end ########################################
     
-######################################## WACV2024 SEMNet start ########################################
-
 class TransformerEncoderLayer_SEFN(nn.Module):
     def __init__(self, c1, cm=2048, num_heads=8, dropout=0.0, act=nn.GELU(), normalize_before=False):
         super().__init__()
@@ -1247,10 +1226,7 @@ class TransformerEncoderLayer_ASSA_SEFN(nn.Module):
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
-######################################## WACV2024 SEMNet end ########################################
     
-######################################## CVPR2025 Mona start ########################################
-
 class TransformerEncoderLayer_Mona(nn.Module):
 
     def __init__(self, c1, cm=2048, num_heads=8, dropout=0.0, act=nn.GELU(), normalize_before=False):
@@ -1399,9 +1375,6 @@ class TransformerEncoderLayer_Pola_SEFN_Mona(nn.Module):
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
-######################################## CVPR2025 Mona end ########################################
-    
-######################################## CVPR2025 DynamicTanh start ########################################
     
 class DynamicTanh(nn.Module):
     def __init__(self, normalized_shape, channels_last, alpha_init_value=0.5):
@@ -1523,9 +1496,7 @@ class TransformerEncoderLayer_Pola_SEFN_Mona_DyT(nn.Module):
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
-######################################## CVPR2025 DynamicTanh end ########################################
     
-
 class TransformerEncoderLayer_SEFFN(nn.Module):
     def __init__(self, c1, cm=2048, num_heads=8, dropout=0.0, act=nn.GELU(), normalize_before=False):
         super().__init__()
@@ -1634,8 +1605,6 @@ class TransformerEncoderLayer_Pola_SEFFN_Mona_DyT(nn.Module):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
     
-######################################## CVPR2025 EVSSM start ########################################
-
 class TransformerEncoderLayer_EDFFN(nn.Module):
     def __init__(self, c1, cm=2048, num_heads=8, dropout=0.0, act=nn.GELU(), normalize_before=False):
         super().__init__()
@@ -1742,8 +1711,6 @@ class TransformerEncoderLayer_Pola_EDFFN_Mona_DyT(nn.Module):
 
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
-
-######################################## CVPR2025 EVSSM end ########################################
 
 
 class LinearAttention(nn.Module):
@@ -1871,8 +1838,6 @@ class TransformerEncoderLayer_MSLA(nn.Module):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
     
-######################################## ACM MM 2025 start ########################################
-
 class Attention_EPGO(nn.Module):
 
     def __init__(self, dim, num_heads=8, attn_ratio=0.5):
@@ -1944,9 +1909,6 @@ class TransformerEncoderLayer_EPGO(nn.Module):
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
-######################################## ACM MM 2025 end ########################################
-    
-######################################## SHViT CVPR2024 start ########################################
     
 class SHSA_GroupNorm(torch.nn.GroupNorm):
     def __init__(self, num_channels, **kwargs):
@@ -2086,8 +2048,6 @@ class TransformerEncoderLayer_SHSA_EPGO(nn.Module):
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
-######################################## SHViT CVPR2024 end ########################################
-    
     
 class TransformerEncoderLayer_DML(nn.Module):
     def __init__(self, c1, cm=2048, num_heads=8, dropout=0.0, act=nn.GELU(), normalize_before=False):
@@ -2167,8 +2127,6 @@ class AIFI_DML(TransformerEncoderLayer_DML):
         return torch.cat([torch.sin(out_w), torch.cos(out_w), torch.sin(out_h), torch.cos(out_h)], 1)[None]
 
     
-######################################## TPAMI2025 LRFormer start ########################################
-
 class LRSA(nn.Module):
     def __init__(self, dim, num_heads=4, qkv_bias=False, qk_scale=None, attn_drop=0., proj_drop=0., 
         pooled_sizes=[11,8,6,4], q_pooled_size=16, q_conv=False):
@@ -2289,10 +2247,7 @@ class TransformerEncoderLayer_LRSA(nn.Module):
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
 
-######################################## TPAMI2025 LRFormer end ########################################
     
-######################################## ICCV2025 Rectifying Magnitude Neglect in Linear Attention start ########################################
-
 def rotate_every_two(x):
     x1 = x[:, :, :, ::2]
     x2 = x[:, :, :, 1::2]
@@ -2397,5 +2352,3 @@ class TransformerEncoderLayer_MALA(nn.Module):
 
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
-
-######################################## ICCV2025 Rectifying Magnitude Neglect in Linear Attention end ########################################

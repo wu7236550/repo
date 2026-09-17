@@ -62,18 +62,20 @@ same schedule, giving a complete 2³ factorial design.
 
 ## Proposed modules
 
-1. **MSPC** — lightweight backbone that combines multi-scale partial convolution
-   (3×3/5×5/7×7 kernels applied to a 50 % channel split) with a cross-stage-partial (CSP)
-   structure. Implemented as `MSPC` in `src/ultralytics/nn/extra_modules/block.py`.
-2. **MCAF** — the re-parameterised RepNCSPELAN4 block of YOLOv9 followed by
-   context anchor attention (CAA) from PKINet. Implemented as `MCAF` in
-   `src/ultralytics/nn/extra_modules/block.py`.
-3. **LRPB-AIFI** — replaces the AIFI encoder. A learnable relative position bias (LRPB) takes the place of the fixed sinusoidal encoding:
-   an MLP maps the relative coordinate offsets (Δx, Δy) to per-head scalar attention biases. The
-   bias tables are generated at runtime for the actual feature-map size, so 416×416
-   (S5 = 13×13), 640×640 (S5 = 20×20) and non-square inputs are all supported.
-   Implemented as `LRPB_AIFI` / `LRPB_Attention` / `LRPB` in
-   `src/ultralytics/nn/extra_modules/transformer.py`.
+1. **MSPC** — Multi-Scale Partial Convolution backbone. It combines multi-scale partial
+   convolution (3×3/5×5/7×7 kernels applied to a 50 % channel split) with a
+   cross-stage-partial (CSP) structure. Implemented as `MSPC` (built on the `MSPConv`
+   partial-convolution unit) in `src/ultralytics/nn/extra_modules/block.py`.
+2. **MCAF** — Multi-scale Context-Anchored Fusion. The re-parameterised RepNCSPELAN4 block
+   of YOLOv9 followed by context anchor attention (CAA) from PKINet. Implemented as `MCAF`
+   in `src/ultralytics/nn/extra_modules/block.py`.
+3. **LRPB-AIFI** — Learnable Relative Position Bias for Attention-based Intra-scale Feature
+   Interaction. It replaces the AIFI encoder: a learnable relative position bias (LRPB)
+   takes the place of the fixed sinusoidal encoding, and an MLP maps the relative coordinate
+   offsets (Δx, Δy) to per-head scalar attention biases. The bias tables are generated at
+   runtime for the actual feature-map size, so 416×416 (S5 = 13×13), 640×640 (S5 = 20×20)
+   and non-square inputs are all supported. Implemented as `LRPB_AIFI` / `LRPB_Attention` /
+   `LRPB` in `src/ultralytics/nn/extra_modules/transformer.py`.
 
 > Note on terminology: `LRPB` stands for *learnable relative position bias*, following
 > CrossFormer++ [18]. It is a learnable continuous parameterisation of relative position
