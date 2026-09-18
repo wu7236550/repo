@@ -8,7 +8,7 @@ import numpy as np
 from typing import Tuple
 
 from ..modules.conv import Conv, autopad
-from ..modules.transformer import TransformerEncoderLayer
+from ..modules.transformer import TransformerEncoderLayer, AIFI
 from .attention import DAttention, HiLo, EfficientAdditiveAttnetion, AttentionTSSA
 from .prepbn import RepBN, LinearNorm
 from .ast import AdaptiveSparseSA
@@ -30,7 +30,7 @@ __all__ = ['TransformerEncoderLayer_LocalWindowAttention', 'AIFI_LPE', 'Transfor
            'TransformerEncoderLayer_Pola_SEFN_Mona', 'AIFI_DyT', 'TransformerEncoderLayer_ASSA_SEFN_Mona_DyT', 'TransformerEncoderLayer_Pola_SEFN_Mona_DyT',
            'AIFI_SEFFN', 'TransformerEncoderLayer_Pola_SEFFN_Mona_DyT', 'AIFI_EDFFN', 'TransformerEncoderLayer_Pola_EDFFN_Mona_DyT', 'TransformerEncoderLayer_MSLA',
            'TransformerEncoderLayer_EPGO', 'TransformerEncoderLayer_SHSA', 'TransformerEncoderLayer_SHSA_EPGO', 'AIFI_DML', 'TransformerEncoderLayer_LRSA', 
-           'TransformerEncoderLayer_MALA']
+           'TransformerEncoderLayer_MALA', 'PE_AIFI', 'StaticRPEAttention']
 
 
 class LayerNorm(nn.Module):
@@ -848,6 +848,140 @@ class LRPB_AIFI(nn.Module):
 
     def forward(self, src, src_mask=None, src_key_padding_mask=None, pos=None):
         return self.forward_post(src, src_mask, src_key_padding_mask, pos)
+
+
+class StaticRPEAttention(nn.Module):
+    """Multi-head self-attention with a static relative-position-bias lookup table.
+
+    The bias is one trainable tensor of shape (num_heads, 2R-1, 2R-1) defined on a
+    reference RxR token grid and addressed by the integer relative-position index,
+    as in the Swin transformer. It is the non-continuous counterpart of ``LRPB``:
+    both use the same relative-position index space, but here the bias is read from
+    a table instead of being produced by a multi-layer perceptron, so offsets that
+    were rarely or never observed during training receive no interpolation.
+
+    Args:
+        dim: channel dimension of the tokens.
+        num_heads: number of attention heads.
+        ref_size: side of the reference token grid used to instantiate the table.
+    """
+
+    def __init__(self, dim, num_heads=8, qkv_bias=True, attn_drop=0., proj_drop=0., ref_size=13):
+        super().__init__()
+        self.dim = dim
+        self.num_heads = num_heads
+        head_dim = dim // num_heads
+        self.scale = head_dim ** -0.5
+        self.ref_size = int(ref_size)
+        self.relative_position_bias_table = nn.Parameter(
+            torch.zeros(self.num_heads, 2 * self.ref_size - 1, 2 * self.ref_size - 1))
+        nn.init.trunc_normal_(self.relative_position_bias_table, std=.02)
+        self._index_cache = {}
+
+        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.attn_drop = nn.Dropout(attn_drop)
+        self.proj = nn.Linear(dim, dim)
+        self.proj_drop = nn.Dropout(proj_drop)
+        self.softmax = nn.Softmax(dim=-1)
+
+    def _relative_position_index(self, H, W, device):
+        key = (int(H), int(W))
+        index = self._index_cache.get(key)
+        if index is None:
+            coords_h = torch.arange(H)
+            coords_w = torch.arange(W)
+            coords = torch.stack(torch.meshgrid(coords_h, coords_w, indexing='ij'))
+            coords_flatten = torch.flatten(coords, 1)
+            relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]
+            relative_coords = relative_coords.permute(1, 2, 0).contiguous()
+            relative_coords[:, :, 0] += H - 1
+            relative_coords[:, :, 1] += W - 1
+            relative_coords[:, :, 0] *= 2 * W - 1
+            index = relative_coords.sum(-1)
+            self._index_cache[key] = index
+        return index
+
+    def _bias(self, H, W, device, dtype):
+        table = self.relative_position_bias_table
+        if table.shape[1] != 2 * H - 1 or table.shape[2] != 2 * W - 1:
+            table = F.interpolate(table.unsqueeze(0), size=(2 * H - 1, 2 * W - 1),
+                                  mode='bilinear', align_corners=False).squeeze(0)
+        index = self._relative_position_index(H, W, device)
+        bias = table.reshape(self.num_heads, -1)[:, index.reshape(-1).to(device)]
+        return bias.reshape(self.num_heads, H * W, H * W).unsqueeze(0)
+
+    def forward(self, x, hw=None):
+        B_, N, C = x.shape
+        if hw is not None:
+            H, W = int(hw[0]), int(hw[1])
+        else:
+            H = W = int(round(N ** 0.5))
+        assert H * W == N, 'StaticRPEAttention: token count %d does not match %dx%d=%d' % (N, H, W, H * W)
+        qkv = self.qkv(x).reshape(B_, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv[0], qkv[1], qkv[2]
+        attn = (q * self.scale) @ k.transpose(-2, -1)
+        attn = attn + self._bias(H, W, x.device, x.dtype).to(dtype=attn.dtype)
+        attn = self.attn_drop(self.softmax(attn))
+        x = (attn @ v).transpose(1, 2).reshape(B_, N, C)
+        return self.proj_drop(self.proj(x))
+
+
+class PE_AIFI(nn.Module):
+    """AIFI with a selectable positional-encoding scheme.
+
+    Provides the positional-encoding control configurations of the ablation study.
+    ``pos_mode`` selects one of three schemes, all applied to the same AIFI block
+    (one multi-head self-attention plus a feed-forward network over the S5 level):
+
+      ``'sinusoidal'`` - parameter-free 2D sin-cos embedding generated from the
+                         token grid and added to the queries and keys. This is the
+                         RT-DETR baseline scheme.
+      ``'none'``       - the identical block without any positional encoding.
+      ``'static'``     - no absolute embedding; a static relative-position-bias
+                         lookup table is added to the attention logits.
+
+    The fourth arm of that control family, the learnable relative position bias,
+    is provided by ``LRPB_AIFI``.
+    """
+
+    def __init__(self, c1, cm=2048, pos_mode='sinusoidal', num_heads=8, ref_size=13,
+                 dropout=0.0, act=nn.GELU(), normalize_before=False):
+        super().__init__()
+        assert pos_mode in ('sinusoidal', 'none', 'static'), \
+            "PE_AIFI: pos_mode must be 'sinusoidal', 'none' or 'static'"
+        assert cm % num_heads == 0, \
+            'PE_AIFI: hidden dimension %d must be divisible by %d heads' % (cm, num_heads)
+        self.pos_mode = pos_mode
+        if pos_mode in ('sinusoidal', 'none'):
+            self.encoder = TransformerEncoderLayer(c1, cm, num_heads, dropout, act, normalize_before)
+        else:
+            self.attn = StaticRPEAttention(c1, num_heads=num_heads, proj_drop=dropout, ref_size=ref_size)
+            self.fc1 = nn.Conv2d(c1, cm, 1)
+            self.fc2 = nn.Conv2d(cm, c1, 1)
+            self.norm1 = LayerNorm(c1)
+            self.norm2 = LayerNorm(c1)
+            self.dropout = nn.Dropout(dropout)
+            self.dropout1 = nn.Dropout(dropout)
+            self.dropout2 = nn.Dropout(dropout)
+            self.act = act
+
+    def forward(self, x):
+        c, h, w = x.shape[1:]
+        if self.pos_mode in ('sinusoidal', 'none'):
+            src = x.flatten(2).permute(0, 2, 1)
+            pos = None
+            if self.pos_mode == 'sinusoidal':
+                pos = AIFI.build_2d_sincos_position_embedding(w, h, c)
+                pos = pos.to(device=x.device, dtype=x.dtype)
+            src = self.encoder(src, pos=pos)
+            return src.permute(0, 2, 1).view([-1, c, h, w]).contiguous()
+
+        src2 = self.attn(x.flatten(2).permute(0, 2, 1), hw=(h, w))
+        src2 = src2.permute(0, 2, 1).view([-1, c, h, w]).contiguous()
+        src = x + self.dropout1(src2)
+        src = self.norm1(src)
+        src2 = self.fc2(self.dropout(self.act(self.fc1(src))))
+        return self.norm2(src + self.dropout2(src2))
 
 
 class PolaLinearAttention(nn.Module):

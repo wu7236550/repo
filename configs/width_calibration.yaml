@@ -1,0 +1,38 @@
+# Pixel-to-millimetre calibration for the crack-width bins of the detailed-metrics
+# table (Table 4 of the manuscript; bin edges at 3 mm and 10 mm).
+#
+# The bins are applied to the width of a ground-truth bounding box in pixels at the
+# 416x416 network input resolution. Two equivalent routes are supported; fill in exactly
+# one of them and leave the other at its null defaults.
+#
+#   Route A - acquisition geometry. For a camera whose optical axis is perpendicular to
+#     the road surface at the working distance,
+#         mm_per_pixel = mounting_height_mm / focal_length_px
+#     where focal_length_px = focal_length_mm / pixel_pitch_mm. This is the route that
+#     matches the vehicle-mounted acquisition described in Section 4.1.
+#
+#   Route B - direct measurement. Photograph a target of known physical size at the
+#     working distance and record the number of pixels it spans:
+#         mm_per_pixel = reference_mm / reference_pixels
+#
+# The calibration describes one acquisition geometry, so it is valid only for the source
+# groups listed under applies_to_source_groups. The images of the public crack datasets
+# were acquired with smartphone, handheld and industrial cameras whose scale is not
+# recorded in this repository, so they are outside the calibrated portion. Run
+# src/calibrate_width.py to print the resolved calibration, the pixel equivalents of the
+# bin edges, and how many test-set boxes fall inside and outside the calibrated portion.
+
+geometry:
+  mounting_height_mm: null
+  focal_length_px: null
+
+direct:
+  reference_mm: null
+  reference_pixels: null
+
+applies_to_source_groups:
+  - po_
+  - img_
+  - IMG_
+
+width_bins_mm: [3.0, 10.0]

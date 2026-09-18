@@ -17,10 +17,11 @@ figures reported in the paper.
 |------|----------|
 | `src/` | Training, validation, inference and profiling code. The three proposed modules live in `src/ultralytics/nn/extra_modules/`. |
 | `src/ultralytics/cfg/models/rt-detr/` | The **eight** ablation configurations of Table 3 (baseline, three single modules, three two-module combinations, and the full model). |
-| `configs/` | `roadrdd.yaml` dataset definition and `train_config.md` hyperparameters. |
+| `src/ultralytics/cfg/models/rt-detr/controls/` | The **five** control configurations that separate the CAA contribution from the fusion-block replacement, and the four positional-encoding schemes. |
+| `configs/` | `roadrdd.yaml` dataset definition, `width_calibration.yaml` pixel-to-millimetre calibration and `train_config.md` hyperparameters. |
 | `dataset/roadrdd/` | The audited road-defect dataset with YOLO-format annotations, a per-image SHA-256 manifest and a split manifest. |
-| `dataset/roadrdd/audit/` | The byte-level duplicate audit log, the deduplication plan and the dataset audit report. |
-| `docs/` | Annotation specification, dataset statistics and reproducibility notes. |
+| `dataset/roadrdd/audit/` | The byte-level duplicate audit log, the deduplication plan, the dataset audit report and the background-only patch manifest. |
+| `docs/` | Annotation specification, dataset statistics, reproducibility notes and the detailed-metrics protocol. |
 
 ## 2. Model
 
@@ -106,11 +107,22 @@ python train.py --data ../configs/roadrdd.yaml --imgsz 416 --batch 16 --epochs 2
 # train one of the eight ablation configurations
 python train.py --cfg ultralytics/cfg/models/rt-detr/rtdetr-r18.yaml --name r18
 
+# train one of the five control configurations (CAA decomposition and positional encoding)
+python train.py --cfg ultralytics/cfg/models/rt-detr/controls/rtdetr-control-PE-static.yaml
+
 # evaluate
 python val.py --weights runs/roadrdd/train/<run>/weights/best.pt --split test --imgsz 416
 
 # parameters and GFLOPs with the model_info convention (the convention used in the paper)
 python get_all_yaml_param_and_flops.py --imgsz 640
+python get_all_yaml_param_and_flops.py --imgsz 416 --cfg-dir ultralytics/cfg/models/rt-detr/controls
+
+# background-only patches for the FP/image metric, and its evaluation
+python make_background_patches.py --data ../dataset/roadrdd --split test
+python eval_background_fp.py --weights runs/roadrdd/train/<run>/weights/best.pt --imgsz 416 --conf 0.25
+
+# pixel-to-millimetre calibration and crack-width bins
+python calibrate_width.py
 
 # optional fvcore operator-level breakdown (diagnostic only, different counting convention)
 python get_flops_fvcore.py --imgsz 416 640

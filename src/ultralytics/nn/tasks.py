@@ -600,7 +600,7 @@ def parse_model(d, ch, verbose=True, warehouse_manager=None):
                 n = 1
         elif m in (AIFI, AIFI_LPE, TransformerEncoderLayer_LocalWindowAttention, TransformerEncoderLayer_DAttention, TransformerEncoderLayer_HiLo, 
                    TransformerEncoderLayer_EfficientAdditiveAttnetion, AIFI_RepBN, TransformerEncoderLayer_AdditiveTokenMixer,
-                   TransformerEncoderLayer_MSMHSA, TransformerEncoderLayer_DHSA, LRPB_AIFI, DTAB, ETB, FDT,
+                   TransformerEncoderLayer_MSMHSA, TransformerEncoderLayer_DHSA, LRPB_AIFI, PE_AIFI, DTAB, ETB, FDT,
                    TransformerEncoderLayer_Pola, TransformerEncoderLayer_TSSA, TransformerEncoderLayer_ASSA, TransformerEncoderLayer_Pola_CGLU,
                    TransformerEncoderLayer_Pola_FMFFN, AIFI_SEFN, TransformerEncoderLayer_ASSA_SEFN, TransformerEncoderLayer_Pola_SEFN, AIFI_Mona,
                    TransformerEncoderLayer_Pola_SEFN_Mona, TransformerEncoderLayer_ASSA_SEFN_Mona, AIFI_DyT, TransformerEncoderLayer_ASSA_SEFN_Mona_DyT,
