@@ -219,6 +219,35 @@ def get_params():
     return params
 
 
+def build_argparser():
+    p = argparse.ArgumentParser(
+        description='Grad-CAM feature heatmaps at the selected layer indices (Figure 7 of '
+                    'the manuscript; the last index is the S5 level).')
+    p.add_argument('--weights', type=str, default='weights/rtdetr-r18.pt',
+                   help='model weights; checkpoints are not distributed with this repository')
+    p.add_argument('--source', type=str, required=True,
+                   help='image file or directory to visualise')
+    p.add_argument('--out', type=str, default='result', help='output directory')
+    p.add_argument('--device', type=str, default='cuda:0')
+    p.add_argument('--method', type=str, default='GradCAMPlusPlus',
+                   help='GradCAMPlusPlus | GradCAM | XGradCAM | EigenCAM | HiResCAM | '
+                        'LayerCAM | RandomCAM | EigenGradCAM')
+    p.add_argument('--layer', type=int, nargs='+', default=[15, 19, 22, 25],
+                   help='target layer indices; the default set matches rtdetr-r18.yaml')
+    p.add_argument('--conf', type=float, default=0.2,
+                   help='confidence threshold for the drawn boxes')
+    return p
+
+
 if __name__ == '__main__':
-    model = rtdetr_heatmap(**get_params())
-    model(r'/home/hjj/Desktop/dataset/dataset_voc/images', 'result')
+    args = build_argparser().parse_args()
+    params = get_params()
+    params.update(
+        weight=args.weights,
+        device=args.device,
+        method=args.method,
+        layer=args.layer,
+        conf_threshold=args.conf,
+    )
+    model = rtdetr_heatmap(**params)
+    model(args.source, args.out)

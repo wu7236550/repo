@@ -109,7 +109,10 @@ python train.py --cfg ultralytics/cfg/models/rt-detr/rtdetr-r18.yaml --name r18
 # evaluate
 python val.py --weights runs/roadrdd/train/<run>/weights/best.pt --split test --imgsz 416
 
-# GFLOPs with fvcore (the tool used throughout the paper)
+# parameters and GFLOPs with the model_info convention (the convention used in the paper)
+python get_all_yaml_param_and_flops.py --imgsz 640
+
+# optional fvcore operator-level breakdown (diagnostic only, different counting convention)
 python get_flops_fvcore.py --imgsz 416 640
 
 # end-to-end FPS with TensorRT FP16

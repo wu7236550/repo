@@ -3,21 +3,15 @@ scales:
   l: [1.00, 1.00, 1024]
 
 backbone:
-  - [-1, 1, Conv, [64, 3, 2]]
-  - [-1, 1, Conv, [128, 3, 2]]
-  - [-1, 1, MCAF, [128, 64, 32, 1]]
+  - [-1, 1, ConvNormLayer, [32, 3, 2, None, False, 'relu']]
+  - [-1, 1, ConvNormLayer, [32, 3, 1, None, False, 'relu']]
+  - [-1, 1, ConvNormLayer, [64, 3, 1, None, False, 'relu']]
+  - [-1, 1, nn.MaxPool2d, [3, 2, 1]]
 
-  - [-1, 1, ADown, [128]]
-
-  - [-1, 1, MCAF, [128, 64, 32, 1]]
-
-  - [-1, 1, ADown, [256]]
-
-  - [-1, 1, MCAF, [256, 128, 64, 1]]
-
-  - [-1, 1, ADown, [512]]
-
-  - [-1, 1, MCAF, [512, 256, 128, 1]]
+  - [-1, 1, Blocks, [64, BasicBlock, 2, 2, 'relu']]
+  - [-1, 1, Blocks, [128, BasicBlock, 2, 3, 'relu']]
+  - [-1, 1, Blocks, [256, BasicBlock, 2, 4, 'relu']]
+  - [-1, 1, Blocks, [512, BasicBlock, 2, 5, 'relu']]
 
 head:
   - [-1, 1, Conv, [256, 1, 1, None, 1, 1, False]]
@@ -31,16 +25,16 @@ head:
   - [-1, 1, Conv, [256, 1, 1]]
 
   - [-1, 1, nn.Upsample, [None, 2, 'nearest']]
-  - [4, 1, Conv, [256, 1, 1, None, 1, 1, False]]
+  - [5, 1, Conv, [256, 1, 1, None, 1, 1, False]]
   - [[-2, -1], 1, Concat, [1]]
   - [-1, 1, MCAF, [256, 128, 64, 1]]
 
   - [-1, 1, Conv, [256, 3, 2]]
-  - [[-1, 16], 1, Concat, [1]]
+  - [[-1, 15], 1, Concat, [1]]
   - [-1, 1, MCAF, [256, 128, 64, 1]]
 
   - [-1, 1, Conv, [256, 3, 2]]
-  - [[-1, 11], 1, Concat, [1]]
+  - [[-1, 10], 1, Concat, [1]]
   - [-1, 1, MCAF, [256, 128, 64, 1]]
 
-  - [[20, 23, 26], 1, RTDETRDecoder, [nc, 256, 300, 4, 8, 3]]
+  - [[19, 22, 25], 1, RTDETRDecoder, [nc, 256, 300, 4, 8, 3]]

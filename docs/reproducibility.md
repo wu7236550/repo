@@ -8,24 +8,31 @@ the limitations that a reader should be aware of. It is meant to be read togethe
 
 `dataset/roadrdd/` is a mixed road-defect detection set assembled from a vehicle-mounted
 camera plus several public crack-detection repositories. The file-name prefixes indicate the
-following composition of the released 8,695 images:
+following composition, counted before and after byte-level deduplication:
 
-| Grouping key in file name | Images | Notes |
-|---|---|---|
-| `CRACK500_*` and `2016xxxx_*` sequences | 4,129 | CRACK500-style imagery |
-| `po_*` | 1,927 | pothole-origin imagery |
-| `img_*` / `IMG_*` | 783 | mixed origin |
-| `DeepCrack_*` | 485 | DeepCrack |
-| `GAPS384_*` | 433 | GAPS384 |
-| `CFD_*` / `forest_*` | 286 | CrackForest (CFD) |
-| `noncrack_*` | 244 | background-only frames |
-| `CrackTree*` | 187 | CrackTree |
-| other prefixes / bare numeric stems | 221 | residual, to be confirmed by the authors |
+| Grouping key in file name | Images (raw) | Images (released) | Notes |
+|---|---|---|---|
+| `CRACK500_*` and `2016xxxx_*` sequences | 4,129 | 3,990 | CRACK500-style imagery |
+| `po_*` | 1,927 | 1,927 | pothole-origin imagery |
+| `img_*` / `IMG_*` | 783 | 767 | mixed origin |
+| `DeepCrack_*` | 485 | 382 | DeepCrack |
+| `GAPS384_*` | 433 | 433 | GAPS384 |
+| `CFD_*` / `forest_*` | 286 | 240 | CrackForest (CFD) |
+| `noncrack_*` | 244 | 244 | background-only frames |
+| `CrackTree*` | 187 | 112 | CrackTree |
+| `Eugen_Muller_*`, `Volker_*`, bare numeric stems | 600 | 600 | residual, to be confirmed by the authors |
+| **Total** | **9,074** | **8,695** | |
+
+The two columns differ by exactly the 379 byte-identical copies removed in the audit
+(Section 2), so the table is consistent with `audit/dataset_audit.md` in both stages.
 
 This table is derived from file-name prefixes only. It is provided so that readers can see
 that the set is a mixture of public datasets and field imagery rather than a single
-self-collected corpus, and it should be replaced by an authoritative per-source breakdown
-before publication.
+self-collected corpus, and it can be recomputed directly from `dataset/roadrdd/images/` and
+`dataset/roadrdd/MANIFEST.sha256`. Table 1a of the manuscript reports this same prefix-based
+decomposition. The last row (`Eugen_Muller_*`, `Volker_*` and bare numeric stems, 600 images
+in both columns) is the only entry that still requires the authors' confirmation; the source
+and acquisition details of that group are not recorded in this repository.
 
 ## 2. Dataset audit
 
@@ -71,9 +78,19 @@ Consequences:
 
 ## 4. Measurement protocols
 
-* **GFLOPs** — fvcore `FlopCountAnalysis`, batch size 1, at the stated resolution, with no
-  area-scaling extrapolation. Run `src/get_flops_fvcore.py`; it profiles every ablation
-  configuration at 416×416 and 640×640 and writes an operator-level breakdown CSV.
+* **GFLOPs** — the ultralytics `model_info` (THOP) convention of **two floating-point
+  operations per multiply–accumulate**, batch size 1, on the fused model. Run
+  `src/get_all_yaml_param_and_flops.py --imgsz <N>`; it profiles every ablation configuration
+  at the requested resolution (default 640×640) and prints both parameter counts and GFLOPs.
+  The figures quoted in the manuscript are profiled at 640×640 and converted to the target
+  resolution by the square of the resolution ratio (416×416 for the main results), so the
+  relative reductions are resolution-invariant. This is the convention used by the RT-DETR
+  and YOLO literature.
+* **`src/get_flops_fvcore.py` is a diagnostic only.** fvcore's `FlopCountAnalysis` counts one
+  multiply–accumulate as one FLOP, so its absolute values are roughly half those of the
+  `model_info` convention, and it reports per-operator detail rather than the headline number.
+  It is included so that readers can inspect the operator-level breakdown; its totals are
+  **not** the values reported in the manuscript.
 * **FPS** — TensorRT 8.6 FP16, batch size 1, end-to-end (image decode, letterbox resize,
   normalisation, engine forward, post-processing). 200 warm-up iterations, then 5 runs of 300
   measured iterations, `cudaDeviceSynchronize` around each timed segment, GPU clock locked
@@ -92,3 +109,7 @@ are included, but the artefacts themselves are not part of this release.
 
 `environment.yml` pins the exact package versions used for the experiments (PyTorch 2.4.0,
 CUDA 11.8, TensorRT 8.6, fvcore). `src/requirements.txt` is the lighter pip-only equivalent.
+Both also list `timm`, `efficientnet_pytorch`, `einops`, `dill`, `PyWavelets` and `seaborn`:
+these are imported unconditionally by the vendored third-party modules under
+`src/ultralytics/nn/`, so they are required merely to `import ultralytics`, even though the
+paper's three modules do not use them.

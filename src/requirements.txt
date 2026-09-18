@@ -18,3 +18,13 @@ fvcore>=0.1.5.post20221221
 
 
 pytest>=7.4
+
+# Imported unconditionally by vendored third-party modules that
+# `ultralytics.nn.extra_modules` pulls in, so they are required merely to
+# `import ultralytics` (timm >= 0.9 for `timm.layers.use_fused_attn`).
+timm>=0.9.0
+efficientnet_pytorch>=0.7.1
+einops>=0.7
+dill>=0.3.8
+PyWavelets>=1.4
+seaborn>=0.13

@@ -31,10 +31,14 @@ images are retained in the release.
 
 ## Data splits
 
-The split is defined at the **road-segment / acquisition-sequence level**: images originating
-from the same road segment are never distributed across the training, validation and test
-sets. The split is recorded in `split_manifest.csv`, which lists, for every image, its split
-assignment, a `source_group` identifier and its SHA-256 hash.
+The split is **duplicate-free at the byte level**: no two byte-identical images appear in
+different splits. The split is recorded in `split_manifest.csv`, which lists, for every
+image, its split assignment, a `source_group` identifier and its SHA-256 hash.
+
+The split is **not** leakage-free at the source-image level. Grouping images by
+`source_group` shows that 895 of the 5,875 source groups still have representatives in more
+than one split, so no claim of a fully leakage-free split should be made for this release;
+see `reproducibility.md`, Section 2, for the residual limitation.
 
 `source_group` is obtained by stripping the Roboflow `.rf.<hash>` augmentation suffix from
 the file name, so that all augmented variants of one source photograph share a group id.

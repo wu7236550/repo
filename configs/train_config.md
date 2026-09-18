@@ -13,7 +13,7 @@ Convolution and Context-Aware Position Modeling".
 | GPU | NVIDIA GeForce RTX 3080 (10 GB) |
 | Python / PyTorch | PyTorch 2.4.0 + CUDA 11.8 |
 | Inference acceleration | TensorRT 8.6 |
-| FLOPs profiler | fvcore (`FlopCountAnalysis`) |
+| FLOPs profiler | ultralytics `model_info` (THOP, 2×MACs) |
 
 ## Model
 
@@ -38,9 +38,12 @@ Convolution and Context-Aware Position Modeling".
 ## Augmentation (Section 4.1)
 
 - Random horizontal flipping, probability 0.5
-- Random photometric perturbation (brightness ±10 %, contrast ±5 %)
-- Random cropping and scaling (0.8–1.2×)
-- Mosaic augmentation, probability 0.2
+- Random photometric perturbation (brightness/value ±10 %, saturation ±5 %)
+- Random scaling (0.8–1.2×)
+- Mosaic augmentation, probability 0.2, active for the whole schedule (`close_mosaic=0`)
+
+These values are the ones set in `src/train.py` (`fliplr=0.5`, `hsv_v=0.10`, `hsv_s=0.05`,
+`scale=0.2`, `mosaic=0.2`, `close_mosaic=0`).
 
 Augmentation is applied to the training split only.
 
