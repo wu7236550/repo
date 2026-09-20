@@ -1,9 +1,10 @@
 # Detailed-Metrics Protocol
 
-This document specifies how the module-attribution metrics of the detailed-metrics table
-(Table 4 of the manuscript) are produced, and states exactly which parts of them can and
+This document specifies how the module-attribution metrics of the detailed-metrics tables
+(Tables 6 and 7 of the manuscript) are produced, and states exactly which parts of them can and
 cannot be reproduced from this repository. It is meant to be read together with
-`reproducibility.md` and `../dataset/roadrdd/audit/dataset_audit.md`.
+`manuscript_alignment.md`, `reproducibility.md` and
+`../dataset/roadrdd/audit/dataset_audit.md`.
 
 Everything described here is executed by scripts in `../src/`:
 
@@ -165,7 +166,7 @@ computed over the whole test split mixes physically different scales.
 
 ---
 
-## 3. What this means for Table 4
+## 3. What this means for the detailed-metrics table (Tables 6 and 7)
 
 | Column | Reproducible from the release |
 |---|---|
@@ -187,7 +188,11 @@ metrics computed on the test split at the 416x416 input resolution:
   pixels respectively.
 * `AP75` is the mean average precision at an IoU threshold of 0.75.
 * All per-class values follow the same protocol as the aggregate mAP reported in the
-  ablation table, evaluated on the 1,697-image test split of the released manifest.
+  ablation table, evaluated on the **test split**. On the released manifest that split has
+  1,697 images; the manuscript's main-set split has 1,510 test images, because it also
+  excludes the untraceable name families (see `reproducibility.md`, Section 1.1). A reader
+  who recomputes these columns from the release will therefore obtain values on 1,697 rather
+  than 1,510 images, and the two are not directly comparable.
 
 ---
 
@@ -195,7 +200,7 @@ metrics computed on the test split at the 416x416 input resolution:
 
 1. **The acquisition geometry** needed by `configs/width_calibration.yaml` (Section 2.2).
 2. **A per-instance crack-width table** (Section 2.3).
-3. **The five random seeds' per-run logs** - see Section 5 of `reproducibility.md`.
+3. **The five random seeds' per-run logs** - see Section 6 of `reproducibility.md`.
 4. **Trained weights.**
 
 Items 1 and 2 are the only ones that block the reproduction of a reported number; both are

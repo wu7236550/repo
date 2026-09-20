@@ -24,8 +24,8 @@ seed: 0
 deterministic: True
 single_cls: False
 rect: False
-cos_lr: False
-close_mosaic: 0
+cos_lr: True  # manuscript Table 4: cosine schedule, 1e-4 -> 1e-6 over 240 epochs
+close_mosaic: 15  # manuscript Table 4: mosaic closed over the last 15 epochs
 resume: False
 amp: False
 fraction: 1.0
@@ -73,13 +73,21 @@ opset:
 workspace: 4
 nms: False
 
-lr0: 0.0001
-lrf: 1.0
+lr0: 0.0001  # manuscript Table 4: base learning rate 1e-4
+lrf: 0.01  # final LR factor; with cos_lr this decays 1e-4 -> 1e-6 (Table 4)
 momentum: 0.9
-weight_decay: 0.0001
+weight_decay: 0.0001  # manuscript Table 4: weight decay 1e-4
+# NOTE: in this fork the warm-up loop compares warmup_epochs against the *global iteration*
+# index, not against the epoch number, so the value below is an iteration budget. 2000
+# iterations is about 5 epochs on the released training split, i.e. Table 4's "5 epochs,
+# linear" warm-up.
 warmup_epochs: 2000
 warmup_momentum: 0.8
 warmup_bias_lr: 0.1
+# NOTE: these three gains belong to the YOLO training path. RT-DETR uses
+# RTDETRDetectionLoss, whose gains come from DETRLoss's default
+# {'class': 1, 'bbox': 5, 'giou': 2} (manuscript Table 4: cls 1.0, bbox 5.0, giou 2.0),
+# so the values below are inert for this model.
 box: 7.5
 cls: 0.5
 dfl: 1.5
@@ -97,7 +105,7 @@ shear: 0.0
 perspective: 0.0
 flipud: 0.0
 fliplr: 0.5
-mosaic: 0.0
+mosaic: 0.2  # released recipe value; Table 4 names mosaic but not its probability
 mixup: 0.0
 copy_paste: 0.0
 

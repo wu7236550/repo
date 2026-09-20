@@ -1,3 +1,10 @@
+# Environment for the roadrdd release.
+#
+# Section 4.2 of the manuscript reports the experiments on a single NVIDIA RTX A6000 (48 GB)
+# with PyTorch 2.1 and CUDA 11.8, and the pins below follow that stack.  The same code also
+# runs on newer CUDA 11.8 builds of PyTorch (the previous release of this repository pinned
+# 2.4.0 / torchvision 0.19.0); the Python-level API used by the training, validation and
+# profiling scripts is unchanged between those versions.
 name: roadrdd
 channels:
   - pytorch
@@ -7,8 +14,8 @@ channels:
 dependencies:
   - python=3.10
   - pip=24.0
-  - pytorch=2.4.0
-  - torchvision=0.19.0
+  - pytorch=2.1.0
+  - torchvision=0.16.0
   - pytorch-cuda=11.8
   - numpy=1.26.4
   - scipy=1.13.0
