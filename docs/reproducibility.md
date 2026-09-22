@@ -86,7 +86,24 @@ Per-class AP, AP_small / AP_medium / AP_large (COCO area thresholds 32² and
   detections above 0.25 are counted (5,214 patches over the 1,686 test images).
 - FP per image on the 15 background-only frames.
 
-## 7. Tests
+## 7. Design-choice controls (Table 5)
+
+Structural controls ship as whole configurations under
+`src/ultralytics/cfg/models/rt-detr/controls/`: `RepNCSPELAN4-noCAA` (neck block
+without attention), `CAA-on-RepC3` (attention on the original neck), and the
+`PE-none / PE-sinusoidal / PE-static` positional-encoding alternatives.
+
+The remaining within-module sweeps change a single default constant; edit, then
+train the full model exactly as in Section 4.
+
+| Control | File / line | Change |
+|---|---|---|
+| CAA kernel K = 7 or 15 | `nn/extra_modules/attention.py`, `CAA.__init__` | `h_kernel_size` / `v_kernel_size` 11 -> 7 or 15 |
+| LRPB hidden D/32 | `nn/extra_modules/transformer.py`, `LRPB_Attention.__init__` (`self.pos = LRPB(self.dim // 4, ...)`) | `self.dim // 4` -> `self.dim // 8` |
+| MSPC kernel pair 3×3/5×5 | `nn/extra_modules/block.py`, `MSPConv.__init__` | `Conv(..., k=5)` -> `k=3` and `k=7` -> `k=5` |
+| Fixed-quarter PConv | `nn/extra_modules/block.py`, `MSPConv` | replace the cascaded 1/2–1/4 splits with a FasterNet-style fixed one-quarter partial convolution |
+
+## 8. Tests
 
 ```bash
 pytest tests/test_lrpb_dynamic_size.py -v
@@ -94,7 +111,7 @@ pytest tests/test_lrpb_dynamic_size.py -v
 
 Verifies LRPB tables for 416×416, 640×640 and non-square inputs.
 
-## 8. Scope
+## 9. Scope
 
 Per the Data Availability Statement, the repository provides the source manifest
 (per-source counts, versions, licenses), the byte-level audit and

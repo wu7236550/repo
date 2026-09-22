@@ -14,7 +14,9 @@ FLOPs       : 24.06 G
 FLOPs       : 25.64 G
 
 --- Runtime (model forward only) ---
-Latency     : 637.095 ms/frame
-Throughput  : 1.57 FPS (cpu)
+Latency     : 585.401 ms/frame
+Throughput  : 1.71 FPS (cpu, measured here)
+
+Manuscript reference: 151.3 FPS, end-to-end on an NVIDIA RTX A6000 (reported value; NOT re-measured on this cpu host).
 
 Note: the manuscript FPS is an end-to-end A6000 measurement (batch 1, 200 warm-up, median over 1,000 frames); reproduce with --device cuda. Parameters and GFLOPs are device-independent.

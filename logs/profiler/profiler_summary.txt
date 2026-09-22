@@ -1,4 +1,4 @@
 # Profiler summary (input 416x416, device=cpu)
 # Headline GFLOPs use Ultralytics model_info (THOP), fused.
-baseline_RT-DETR-R18         params= 19.874M  GFLOPs= 24.06  FPS=    1.6
+baseline_RT-DETR-R18         params= 19.874M  GFLOPs= 24.06  FPS=    1.7
 full_MSPC-MCAF-LRPB          params= 13.252M  GFLOPs= 18.46  FPS=    1.5
