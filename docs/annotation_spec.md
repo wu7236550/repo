@@ -1,94 +1,74 @@
-# roadrdd Annotation Specification
+# RoadRDD annotation specification
 
 ## Classes
 
 | Class ID | Name | Description |
 |----------|------|-------------|
-| 0 | crack | Cracks on pavement and on concrete surfaces (subtypes collapsed) |
+| 0 | crack | Cracks on pavement, tunnel lining and concrete surfaces (all native crack subtypes collapsed) |
 | 1 | pothole | Potholes (severity levels collapsed) |
 
 ## Format
 
-Annotations follow the YOLO detection format. Each image has a companion `.txt` file with
-the same basename. Each line encodes one object:
+Annotations use the YOLO detection format. Each image has a companion `.txt`
+file with the same basename; each line encodes one object:
 
 ```
 <class_id> <x_center> <y_center> <width> <height>
 ```
 
-- Coordinates are **normalized** to `[0, 1]` relative to image width/height.
-- `<x_center>`, `<y_center>`: centre of the bounding box.
-- `<width>`, `<height>`: box dimensions.
+- Coordinates are **normalized to [0, 1]** relative to image width/height.
+- `<x_center>`, `<y_center>`: box centre; `<width>`, `<height>`: box size.
 
-Images without any annotated defect have an empty label file. 17 such background-only
-images are retained in the release.
+Images with no annotated defect have an empty label file; **15** such
+background-only frames are retained.
 
-## Provenance of the labels (Section 4.1 of the manuscript)
+## Provenance
 
-The manuscript does **not** describe an author-side annotation campaign. Section 4.1 states
-that the data are not author-collected but "a locally prepared YOLO derivative of public
-sources", so the released labels inherit the annotation semantics of the upstream datasets:
+The benchmark is not the result of an author-run annotation campaign; it is a
+detection derivative of public sources (see
+`../dataset/roadrdd/SOURCES.md`). Crack labels are derived from CRACK500,
+DeepCrack, GAPs, CrackForest, CrackTree and the tunnel-lining / concrete-facade
+crack collections (pixel masks converted to boxes, subtypes collapsed to
+`crack`). Pothole labels come from annotated pothole collections (severity
+levels collapsed to `pothole`). Validation and test images are never augmented.
 
-- Crack annotations come from the Concrete Crack Conglomerate Dataset (CCCD) families —
-  CRACK500, CFD, DeepCrack, GAPs, CrackTree — plus the tunnel-lining and concrete-facade
-  crack sets. All crack subtypes are collapsed into the single class `crack`.
-- Pothole annotations come from the annotated pothole collections, whose severity levels are
-  collapsed into the single class `pothole`.
-- The mask-to-box / label-collapse rules that produced each label are what the provenance
-  manifest of Supplementary File S1 is meant to record; that manifest is not part of this
-  release (see `reproducibility.md`, Section 6).
+For the external RDD2022 experiment, the official `D00`, `D10` and `D20`
+classes are mapped to `crack` and `D40` to `pothole`; repair/blur markings are
+ignored.
 
-Section 4.1 also states that the untraceable name families are excluded from the main
-experiment, and that validation and test images are never augmented.
+## Splits
 
-Related but separate: for the **external** RDD2022 benchmark the manuscript maps the official
-`D00`, `D10` and `D20` classes to `crack` and `D40` to `pothole`, and ignores `D43`, `D44`
-and `D50`.
+The released split is **group-disjoint**:
 
-## Data splits
+- no two byte-identical images appear in different splits (verified by
+  SHA-256), and
+- no source photograph - identified by stripping the Roboflow `.rf.<hash>`
+  augmentation suffix so all variants share a `source_group` id - contributes to
+  more than one split.
 
-The split is **duplicate-free at the byte level**: no two byte-identical images appear in
-different splits. The split is recorded in `split_manifest.csv`, which lists, for every
-image, its split assignment, a `source_group` identifier and its SHA-256 hash.
+The split is recorded in `split_manifest.csv` (image, split, source group,
+hash) and produced deterministically by
+`../src/tools/group_disjoint_resplit.py` (fixed seed = 2024).
 
-The split is **not** leakage-free at the source-image level. Grouping images by
-`source_group` shows that 895 of the 5,875 source groups still have representatives in more
-than one split, so no claim of a fully leakage-free split should be made for this release.
-The manuscript instead publishes a split that is disjoint at the level of whole source
-groups, and reports the residual same-pothole multi-view risk that filename grouping cannot
-merge; see `reproducibility.md`, Sections 1.1 and 2.
-
-`source_group` is obtained by stripping the Roboflow `.rf.<hash>` augmentation suffix from
-the file name, so that all augmented variants of one source photograph share a group id.
-Readers can therefore verify the split independently.
-
-## Dataset statistics
-
-Statistics for the released (byte-level deduplicated) dataset:
+## Statistics
 
 | Split | Images |
-|-------|--------|
-| train | 6,162 |
-| val   | 836 |
-| test  | 1,697 |
-| **Total** | **8,695** |
+|-------|-------:|
+| train | 5,898 |
+| val   | 842 |
+| test  | 1,686 |
+| **Total** | **8,426** |
 
 | Class | Instances |
-|-------|-----------|
-| crack | 8,455 |
-| pothole | 8,358 |
-| **Total** | **16,813** |
+|-------|----------:|
+| crack | 8,498 |
+| pothole | 7,814 |
+| **Total** | **16,312** |
 
-The pre-audit release contained 9,074 images. The byte-level audit found 379 duplicate
-groups (379 redundant copies), of which 172 spanned two splits; all redundant copies were
-removed. The manuscript's main set is the 7,496-image subset obtained after also excluding
-the untraceable families (14,560 boxes); see `dataset_statistics.md`. See
-`audit/dataset_audit.md` for the full audit and `reproducibility.md` for the residual
-limitations.
+15 background-only frames.
 
-## Dataset license
+## License
 
-This dataset is released for academic research use; the upstream public sources keep their own
-licences (CCCD is CC0; the pothole collections are ODbL-type). If you use `roadrdd` in your
-work, please cite the corresponding manuscript **and** the upstream datasets listed in
-`reproducibility.md`, Section 1.
+The derivative is released for research use; the upstream sources keep their
+own licenses, some of which are non-commercial research only. Cite the
+manuscript and the upstream sources (see `SOURCES.md`).

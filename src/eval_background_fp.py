@@ -5,7 +5,7 @@ above the confidence threshold is a false positive. The reported metric is the m
 number of such boxes per patch, together with a per-source-group breakdown.
 
 The manifest is produced by make_background_patches.py; the protocol and the meaning of
-the threshold are documented in docs/detailed_metrics_protocol.md.
+the threshold are documented in docs/reproducibility.md (Section 6).
 
 Usage:
     python eval_background_fp.py --weights runs/detect/train/weights/best.pt \

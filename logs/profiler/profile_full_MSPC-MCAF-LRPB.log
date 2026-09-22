@@ -1,0 +1,20 @@
+Model profile: full_MSPC-MCAF-LRPB
+Config: src/ultralytics/cfg/models/rt-detr/rtdetr-MSPC_MCAF_LRPB-AIFI.yaml
+Input: 1 x 3 x 416 x 416
+Device: cpu
+PyTorch: 2.14.0+cpu
+Timed runs: 30
+
+--- Headline (Ultralytics model_info / THOP, fused graph) ---
+Layers      : 429
+Parameters  : 13252176 (13.252 M)
+FLOPs       : 18.46 G
+
+--- Cross-check (raw thop on the unfused graph) ---
+FLOPs       : 19.66 G
+
+--- Runtime (model forward only) ---
+Latency     : 682.161 ms/frame
+Throughput  : 1.47 FPS (cpu)
+
+Note: the manuscript FPS is an end-to-end A6000 measurement (batch 1, 200 warm-up, median over 1,000 frames); reproduce with --device cuda. Parameters and GFLOPs are device-independent.
