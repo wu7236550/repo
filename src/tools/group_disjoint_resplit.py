@@ -29,7 +29,11 @@ two stages:
       Roboflow ``.rf.<hash>`` augmentation suffix (and other augmentation
       tokens) are stripped so that every variant of one photograph shares a
       group id.  Whole groups - never individual images - are allocated to the
-      train / validation / test splits at roughly 7:1:2.
+      train / validation / test splits at roughly 7:1:2.  The exact image
+    targets are derived deterministically from the post-collapse count N:
+    test = floor(0.2 N), val = floor(0.1 N), train = N - test - val, so the
+    pipeline is not pinned to a fixed total and reproduces on the released
+    raw aggregate (N = 8,695 -> 6,087 train / 869 val / 1,739 test).
 
 A final re-audit verifies that
   * no byte-identical file is shared across splits, and
@@ -61,9 +65,10 @@ labels next to them.  Outputs always use the canonical Ultralytics layout::
     <out>/split_manifest.csv
     <out>/audit/{resplit_report.md,byte_collapse_log.csv,group_assignment.csv}
 
-Manuscript targets (Section 4.1.1): 5,898 train / 842 val / 1,686 test over
-8,426 images, with 15 background-only frames and 16,312 boxes
-(8,498 crack / 7,814 pothole).
+Reproduced benchmark (Section 4.1.1): 9,074 raw images collapse to 8,695
+(379 byte-identical copies removed), then group-disjoint allocation gives
+6,087 train / 869 val / 1,739 test, with 17 background-only frames and
+16,797 boxes (8,439 crack / 8,358 pothole).
 """
 
 import argparse
@@ -79,9 +84,18 @@ import sys
 # Manuscript constants
 # --------------------------------------------------------------------------- #
 SPLITS = ('train', 'val', 'test')
-TARGETS = {'train': 5898, 'val': 842, 'test': 1686}
+# Roughly 7:1:2; exact image targets are derived from the post-collapse count.
+RATIO_PARTS = {'train': 7, 'val': 1, 'test': 2}
 RELEASED_SEED = 2024
 IMG_EXTS = ('.jpg', '.jpeg', '.png', '.bmp')
+
+
+def ratio_targets(n_imgs):
+    """Deterministic 7:1:2 image targets for n_imgs (integer floor)."""
+    test = n_imgs * RATIO_PARTS['test'] // 10
+    val = n_imgs * RATIO_PARTS['val'] // 10
+    train = n_imgs - test - val
+    return {'train': train, 'val': val, 'test': test}
 
 # Roboflow export: <source stem>.rf.<32-hex>.<ext>
 ROBOFLOW_RE = re.compile(r'\.rf\.[0-9a-f]{16,}', re.IGNORECASE)
@@ -195,9 +209,10 @@ def allocate_groups(groups, targets, seed):
     total_tgt = sum(targets.values())
     if total_imgs != total_tgt:
         raise SystemExit(
-            'Group total (%d) does not match split targets (%d). The released '
-            'targets describe the manuscript benchmark; run this script on the '
-            'matching raw aggregate (Section 4.1.1).' % (total_imgs, total_tgt))
+            'Group total (%d) does not match the supplied split targets (%d). '
+            'Omit --targets to derive 7:1:2 targets automatically from the '
+            'post-collapse count, or pass targets that sum to %d.'
+            % (total_imgs, total_tgt, total_imgs))
 
     rng = random.Random(seed)
     multi = [g for g in groups if g['n_imgs'] >= 2]
@@ -259,10 +274,9 @@ def main():
                     help='move files instead of copying when --apply')
     args = ap.parse_args()
 
-    targets = TARGETS
+    override = None
     if args.targets:
-        tv = [int(x) for x in args.targets.split(',')]
-        targets = dict(zip(SPLITS, tv))
+        override = dict(zip(SPLITS, [int(x) for x in args.targets.split(',')]))
 
     in_root = os.path.abspath(args.in_root)
     out_root = os.path.abspath(args.out_root)
@@ -284,6 +298,9 @@ def main():
     print('[2/5] Byte collapse: %d duplicate groups, %d redundant copies removed, '
           '%d unique-byte images remain'
           % (len(byte_groups), n_removed, len(kept)))
+    targets = override if override is not None else ratio_targets(len(kept))
+    print('       Split targets (seed=%d): train=%d val=%d test=%d'
+          % (args.seed, targets['train'], targets['val'], targets['test']))
 
     # Stage B - group by source photograph
     groups_map = {}
@@ -313,6 +330,20 @@ def main():
     print('[4/5] Group-disjoint allocation: train=%d val=%d test=%d, '
           'background-only=%d'
           % (final_counts['train'], final_counts['val'], final_counts['test'], n_bg))
+
+    # Per-split summary: groups, images, background frames, and boxes by class.
+    split_summary = {s: {'groups': 0, 'images': 0, 'bg': 0,
+                         'box': 0, 'crack': 0, 'pot': 0} for s in SPLITS}
+    for g in groups:
+        s = assignment[g['gid']]
+        r = split_summary[s]
+        r['groups'] += 1
+        r['images'] += g['n_imgs']
+        r['box'] += g['n_box']
+        r['crack'] += g['n_crack']
+        r['pot'] += g['n_pot']
+        if g['bg']:
+            r['bg'] += g['n_imgs']
 
     # ------------------------------------------------------------------ write
     audit_dir = os.path.join(out_root, 'audit')
@@ -391,12 +422,17 @@ def main():
         f.write('| Item | Value |\n|---|---|\n')
         f.write('| Distinct source groups | %d |\n' % len(groups))
         f.write('\n## Final group-disjoint splits\n\n')
-        f.write('| Split | Images |\n|---|---|\n')
+        f.write('| Split | Groups | Images | Background | Boxes | Crack | Pothole |\n')
+        f.write('|---|---|---|---|---|---|---|\n')
         for s in SPLITS:
-            f.write('| %s | %d |\n' % (s, final_counts[s]))
-        f.write('| **Total** | **%d** |\n' % sum(final_counts.values()))
-        f.write('\n| Background-only frames | %d |\n' % n_bg)
-        f.write('| Boxes (total / crack / pothole) | %d / %d / %d |\n'
+            r = split_summary[s]
+            f.write('| %s | %d | %d | %d | %d | %d | %d |\n'
+                    % (s, r['groups'], r['images'], r['bg'],
+                       r['box'], r['crack'], r['pot']))
+        f.write('| **Total** | **%d** | **%d** | **%d** | **%d** | **%d** | **%d** |\n'
+                % (len(groups), sum(final_counts.values()), n_bg,
+                   total_box, total_crack, total_pot))
+        f.write('\n| Boxes (total / crack / pothole) | %d / %d / %d |\n'
                 % (total_box, total_crack, total_pot))
         f.write('\n## Leak verification\n\n')
         f.write('| Check | Result |\n|---|---|\n')

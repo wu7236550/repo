@@ -6,7 +6,7 @@ Code, reconstruction pipeline and evaluation scripts for the manuscript:
 > Convolution and Context-Anchored Fusion for Road Crack and Pothole Detection**
 
 The task is **two-class (`crack` = 0, `pothole` = 1) detection** on a
-group-disjoint, 8,426-image benchmark built from public crack and pothole
+group-disjoint, 8,695-image benchmark built from public crack and pothole
 sources, with a source-disjoint external test on the multi-national
 **RDD2022** dataset.
 
@@ -77,12 +77,12 @@ group-disjoint re-split:
 
 | Split | Images |
 |-------|-------:|
-| train | 5,898 |
-| val   | 842 |
-| test  | 1,686 |
-| **Total** | **8,426** |
+| train | 6,087 |
+| val   | 869 |
+| test  | 1,739 |
+| **Total** | **8,695** |
 
-16,312 boxes (8,498 crack / 7,814 pothole); 15 background-only frames. The
+16,797 boxes (8,439 crack / 8,358 pothole); 17 background-only frames. The
 per-source breakdown, versions and license terms are in
 [`dataset/roadrdd/SOURCES.md`](dataset/roadrdd/SOURCES.md).
 

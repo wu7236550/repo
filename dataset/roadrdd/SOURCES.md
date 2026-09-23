@@ -24,16 +24,16 @@ group-disjoint re-splitting pipeline in `src/tools/` (see
 
 | Source | Version / year | Upstream images | Derived patches (reported) | License | Official location |
 |---|---|---:|---:|---|---|
-| **CRACK500** — pavement cracks | 2019/2020 | 500 (2000×1500) | 3,131 | Academic research use, copyright retained (treat as non-commercial) | <https://github.com/fyangneil/pavement-crack-detection> |
+| **CRACK500** — pavement cracks | 2019/2020 | 500 (2000×1500) | 3,988 | Academic research use, copyright retained (treat as non-commercial) | <https://github.com/fyangneil/pavement-crack-detection> |
 | **DeepCrack** — crack segmentation | 2019 | 537 (544×384) | 382 | Non-commercial research / teaching; authors retain copyright | <https://github.com/yhlleo/DeepCrack> |
 | **GAPs** — German Asphalt Pavement Distress | 2017 | 1,969 (1920×1080, grayscale) | 433 | Free for research under TU Ilmenau terms | [TU Ilmenau GAPs page](https://www.tu-ilmenau.de/en/university/departments/department-of-computer-science-and-automation/profile/institutes-and-groups/institute-of-computer-and-systems-engineering/group-for-neuroinformatics-and-cognitive-robotics/data-sets-code/german-asphalt-pavement-distress-dataset-gaps) |
 | **CrackForest (CFD)** | 2016 | 118 (480×320) | 240 | Academic research use, copyright retained | <https://github.com/cuilimeng/CrackForest-dataset> |
 | **CrackTree200** | 2012 | 206 (varied) | 112 | Academic research use; distributed by the authors | <https://doi.org/10.1016/j.patrec.2011.11.004> |
-| **Tunnel-lining crack collection** (composite; e.g. TACK Tunnel Data/TTD) | 2024–2026 | varies | 1,000 | Mixed; CC BY 4.0 where stated, otherwise research use | <https://arxiv.org/abs/2512.14477> |
-| **Concrete-facade / structural concrete crack collection** (composite; incl. the Mendeley Concrete Crack Images for Classification) | 2018+ | varies | 800 | CC BY 4.0 for the Mendeley component; others per source | <https://data.mendeley.com/datasets/5y9wdsg2zt6> |
-| **Annotated pothole collections** (Pothole-600 + public pothole projects) | 2019+ | 600 (+ project images) | 2,313 | Mixed: Pothole-600 for research; some projects under ODbL / CC BY | <https://sites.google.com/view/pothole-600/dataset> |
-| **Background frames** (defect-free, sampled from the above) | — | varies | 15 | Follows the source frame | same as parent |
-| | | **Total** | **8,426** | | |
+| **Other public pavement-crack photographs** (composite; e.g. Eugen-Müller and camera-titled collections) | 2010s | varies | 145 | Mixed per source; treat as non-commercial research | n/a (aggregated public projects) |
+| **Concrete-facade / structural concrete crack collection** (composite; incl. the Mendeley Concrete Crack Images for Classification) | 2018+ | varies | 237 | CC BY 4.0 for the Mendeley component; others per source | <https://data.mendeley.com/datasets/5y9wdsg2zt6> |
+| **Annotated pothole collections** (Pothole-600 + public pothole projects) | 2019+ | 600 (+ project images) | 3,141 | Mixed: Pothole-600 for research; some projects under ODbL / CC BY | <https://sites.google.com/view/pothole-600/dataset> |
+| **Background frames** (defect-free, sampled from the above) | — | varies | 17 | Follows the source frame | same as parent |
+| | | **Total** | **8,695** | | |
 
 ## Citations
 
@@ -67,6 +67,6 @@ group-disjoint re-splitting pipeline in `src/tools/` (see
 4. The per-source and per-split counts, hashes and verification are written to
    `audit/`, `MANIFEST.sha256` and `split_manifest.csv`.
 
-Manuscript totals (Section 4.1.1): **8,426** images — 5,898 train / 842 val /
-1,686 test; 16,312 boxes (8,498 crack / 7,814 pothole); 15 background-only
+Manuscript totals (Section 4.1.1): **8,695** images — 6,087 train / 869 val /
+1,739 test; 16,797 boxes (8,439 crack / 8,358 pothole); 17 background-only
 frames.

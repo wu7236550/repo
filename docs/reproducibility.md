@@ -38,8 +38,8 @@ pip install -r requirements.txt
 Outputs: `MANIFEST.sha256`, `split_manifest.csv`, `audit/resplit_report.md`,
 `audit/byte_collapse_log.csv`, `audit/group_assignment.csv`.
 
-Expected (Section 4.1.1): **8,426** images - 5,898 / 842 / 1,686; 16,312 boxes
-(8,498 crack / 7,814 pothole); 15 background-only frames; zero byte-identical
+Expected (Section 4.1.1): **8,695** images - 6,087 / 869 / 1,739; 16,797 boxes
+(8,439 crack / 8,358 pothole); 17 background-only frames; zero byte-identical
 files and zero source photographs shared across splits.
 
 ## 3. Build the external RDD2022 partition
@@ -79,12 +79,12 @@ frames, including letterbox, normalization, forward and post-processing).
 
 Per-class AP, AP_small / AP_medium / AP_large (COCO area thresholds 32² and
 96²) and AP75 are produced by the standard validator on the test split
-(1,686 images; scale mix 18% / 37% / 45%). Background behavior:
+(1,739 images; scale mix 8.5% / 28.9% / 62.6%). Background behavior:
 
 - FP per background patch: four fixed-grid 128-pixel candidate patches per test
   image, kept only if they do not intersect any annotation dilated by 16 px;
-  detections above 0.25 are counted (5,214 patches over the 1,686 test images).
-- FP per image on the 15 background-only frames.
+  detections above 0.25 are counted (2,260 patches over the 1,739 test images).
+- FP per image on the 17 background-only frames.
 
 ## 7. Design-choice controls (Table 5)
 

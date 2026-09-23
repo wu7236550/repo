@@ -5,14 +5,14 @@ Reproduces the background protocol of Section 4.2 of the manuscript:
     "on each test image four candidate 128-pixel patches sit at fixed grid
      positions, a patch is kept only if it does not intersect any annotation
      dilated by 16 pixels, and detections above a confidence of 0.25 are
-     counted; this yields 5,214 patches over the 1,686 test images."
+     counted; this yields 2,260 patches over the 1,739 test images."
 
 For every image of the chosen split, FOUR 128 x 128 candidates are placed at a
 fixed 2 x 2 grid of positions. A candidate is kept only when it does not
 intersect any annotated box dilated by ``--margin`` pixels. Every kept patch is
 written to the manifest (there is no random sub-selection), so the manifest and
 its patch count are deterministic and independent of the Python/NumPy versions.
-The reported benchmark result is 5,214 kept patches over the 1,686 test images.
+The reported benchmark result is 2,260 kept patches over the 1,739 test images.
 
 Use ``eval_background_fp.py`` to count detections (false positives) on these
 patches.

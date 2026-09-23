@@ -4,7 +4,7 @@
 
 | Class ID | Name | Description |
 |----------|------|-------------|
-| 0 | crack | Cracks on pavement, tunnel lining and concrete surfaces (all native crack subtypes collapsed) |
+| 0 | crack | Cracks on pavement, structural concrete and other surfaces (all native crack subtypes collapsed) |
 | 1 | pothole | Potholes (severity levels collapsed) |
 
 ## Format
@@ -19,7 +19,7 @@ file with the same basename; each line encodes one object:
 - Coordinates are **normalized to [0, 1]** relative to image width/height.
 - `<x_center>`, `<y_center>`: box centre; `<width>`, `<height>`: box size.
 
-Images with no annotated defect have an empty label file; **15** such
+Images with no annotated defect have an empty label file; **17** such
 background-only frames are retained.
 
 ## Provenance
@@ -27,8 +27,9 @@ background-only frames are retained.
 The benchmark is not the result of an author-run annotation campaign; it is a
 detection derivative of public sources (see
 `../dataset/roadrdd/SOURCES.md`). Crack labels are derived from CRACK500,
-DeepCrack, GAPs, CrackForest, CrackTree and the tunnel-lining / concrete-facade
-crack collections (pixel masks converted to boxes, subtypes collapsed to
+DeepCrack, GAPs, CrackForest, CrackTree, structural concrete crack images and a
+small composite group of other public pavement-crack photographs
+(pixel masks converted to boxes, subtypes collapsed to
 `crack`). Pothole labels come from annotated pothole collections (severity
 levels collapsed to `pothole`). Validation and test images are never augmented.
 
@@ -54,18 +55,18 @@ hash) and produced deterministically by
 
 | Split | Images |
 |-------|-------:|
-| train | 5,898 |
-| val   | 842 |
-| test  | 1,686 |
-| **Total** | **8,426** |
+| train | 6,087 |
+| val   | 869 |
+| test  | 1,739 |
+| **Total** | **8,695** |
 
 | Class | Instances |
 |-------|----------:|
-| crack | 8,498 |
-| pothole | 7,814 |
-| **Total** | **16,312** |
+| crack | 8,439 |
+| pothole | 8,358 |
+| **Total** | **16,797** |
 
-15 background-only frames.
+17 background-only frames.
 
 ## License
 
