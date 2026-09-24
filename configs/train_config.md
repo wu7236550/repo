@@ -56,8 +56,8 @@ what they appear to mean:
 * **Warm-up.** In this fork the warm-up loop compares `args.warmup_epochs` against the
   *global iteration index* (`src/ultralytics/engine/trainer.py`, `_do_train`), so the value
   is an iteration budget rather than an epoch count. The released value `warmup_epochs: 2000`
-  is about 5 epochs on the released training split (6,162 images / batch 16 ≈ 385 iterations
-  per epoch), which is the "5 epochs, linear" of Table 4.
+  is about 5.3 epochs on the released training split (6,087 images / batch 16 ≈ 380 iterations
+  per epoch), which is reported as an approximately five-epoch linear warm-up in Table 4.
 
 ## Augmentation (Table 4)
 
