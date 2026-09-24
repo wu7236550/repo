@@ -59,7 +59,7 @@ python val.py --weights runs/roadrdd/train/<run>/weights/best.pt --split test --
 ```
 
 Recipe: AdamW, 240 epochs, batch 16, lr 1e-4 -> 1e-6 cosine, weight decay 1e-4,
-~5-epoch warm-up, gradient clip 0.1, EMA 0.9999, loss gains cls/L1/GIoU =
+approximately 5 epochs of warm-up, gradient clip 0.1, EMA 0.9999, loss gains cls/L1/GIoU =
 1/5/2; horizontal flip p = 0.5, HSV (0.015, 0.7, 0.4), mosaic p = 0.2 disabled
 for the last 15 epochs, scale/translation 0.2/0.1.
 
