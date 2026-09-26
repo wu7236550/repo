@@ -1,6 +1,6 @@
 # Training Configurations
 
-Reproduces the experimental settings reported in Section 4.2 and Table 4 of the manuscript
+Reproduces the experimental settings reported in Section 4.2 and Table 2 of the manuscript
 *Lightweight RT-DETR for Mixed-Surface Crack and Pothole Detection*.
 
 ## Environment
@@ -10,7 +10,7 @@ Reproduces the experimental settings reported in Section 4.2 and Table 4 of the 
 | GPU | NVIDIA RTX A6000 (48 GB), one device |
 | PyTorch / CUDA | PyTorch 2.1 + CUDA 11.8 |
 | Inference acceleration | TensorRT (FPS and export path only; training is plain PyTorch) |
-| Complexity profiler | `fvcore` 0.1.5 (Table 2) and the ultralytics `model_info` THOP convention |
+| Complexity profiler | `fvcore` 0.1.5 (Table 3) and the ultralytics `model_info` THOP convention |
 
 The manuscript states the single-GPU training and timing environment of Section 4.2; it does
 not report the host OS or CPU, so those are not asserted here.
@@ -20,12 +20,12 @@ not report the host OS or CPU, so those are not asserted here.
 | Item | Value |
 |------|-------|
 | Baseline | RT-DETR-R18 |
-| Decoder layers | 3 (the official RT-DETR-R18 setting: `RTDETRDecoder [nc, 256, 300, 4, 8, 3]`) |
+| Decoder configuration | 3 decoder layers; 3 feature levels; 4 sampling points per head; 8 attention heads; 256 channels |
 | Object queries | 300 |
 | Input size | 416×416 (letterbox, no distortion) |
 | Loss | `RTDETRDetectionLoss`, NMS-free (the deformable decoder selects slots; no NMS) |
 
-## Hyperparameters (Table 4)
+## Hyperparameters (Table 2)
 
 | Parameter | Value |
 |-----------|-------|
@@ -51,15 +51,15 @@ what they appear to mean:
   path. `RTDETRDetectionModel.init_criterion` builds
   `RTDETRDetectionLoss(nc, use_vfl=True)`, whose gains come from `DETRLoss`'s default
   `loss_gain = {'class': 1, 'bbox': 5, 'giou': 2, ...}` — exactly the cls 1.0 / bbox 5.0 /
-  giou 2.0 of Table 4. The `box: 7.5`, `cls: 0.5`, `dfl: 1.5` entries in `default.yaml` are
+  giou 2.0 of Table 2. The `box: 7.5`, `cls: 0.5`, `dfl: 1.5` entries in `default.yaml` are
   therefore inert for this model and are left at the library default.
 * **Warm-up.** In this fork the warm-up loop compares `args.warmup_epochs` against the
   *global iteration index* (`src/ultralytics/engine/trainer.py`, `_do_train`), so the value
   is an iteration budget rather than an epoch count. The released value `warmup_epochs: 2000`
   is about 5.3 epochs on the released training split (6,087 images / batch 16 ≈ 380 iterations
-  per epoch), which is reported as an approximately five-epoch linear warm-up in Table 4.
+  per epoch), which is reported as an approximately five-epoch linear warm-up in Table 2.
 
-## Augmentation (Table 4)
+## Augmentation (Table 2)
 
 - Random horizontal flipping, probability 0.5
 - HSV jitter (0.015, 0.7, 0.4) — hue, saturation, value
@@ -68,19 +68,19 @@ what they appear to mean:
 These values are the ones set in `src/train.py` (`fliplr=0.5`, `hsv_h=0.015`, `hsv_s=0.7`,
 `hsv_v=0.4`, `mosaic=0.2`, `close_mosaic=15`).
 
-Two points are documented rather than resolved, because Table 4 does not settle them:
+Two points are documented rather than resolved, because Table 2 does not settle them:
 
-* Table 4 names mosaic and its closing schedule but **not** its probability. The released
+* Table 2 names mosaic and its closing schedule but **not** its probability. The released
   script keeps the value used for the reported runs (`mosaic=0.2`).
 * The scaling and translation jitter that the released script also applies
-  (`scale=0.2`, `translate=0.1`) are not listed in Table 4. They are retained unchanged so
+  (`scale=0.2`, `translate=0.1`) are not listed in Table 2. They are retained unchanged so
   that the released recipe stays identical to the one that produced the reported numbers;
   see `../docs/manuscript_alignment.md`.
 
 Augmentation is applied to the training split only; validation and test images are never
 augmented.
 
-## The eight factorial ablation configurations (Table 5(a))
+## The eight factorial ablation configurations (Table 4)
 
 All configurations live in `src/ultralytics/cfg/models/rt-detr/` and are trained with the
 same schedule, seed set and split, giving a complete 2³ factorial design.

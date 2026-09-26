@@ -22,6 +22,7 @@ the Data Availability Statement.
 - The reported model modifications are MSPC, MCAF, and LRPB-AIFI. The complete
   2^3 factorial configurations and their controls are retained under
   `src/ultralytics/cfg/models/rt-detr/`.
+- The retained RT-DETR decoder uses a 256-channel model dimension, 300 object queries, three decoder feature levels, four sampling points per head, eight attention heads, and three decoder layers.
 - Derived images are intentionally not redistributed. Their sources, versions, and
   licence terms are recorded in `dataset/roadrdd/SOURCES.md`, and the supplied scripts
   rebuild the auditable group-disjoint split from legally obtained source data.
