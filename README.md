@@ -1,9 +1,10 @@
-# A Lightweight RT-DETR for Road Crack and Pothole Detection
+# MCL-DETR for Road Crack and Pothole Detection
 
 Code, reconstruction pipeline and evaluation scripts for the manuscript:
 
-> **A Lightweight Real-Time Detection Transformer with Multi-Scale Partial
-> Convolution and Context-Anchored Fusion for Road Crack and Pothole Detection**
+> **MCL-DETR: A Lightweight Real-Time Detection Transformer with Multi-Scale
+> Partial Convolution, Context-Anchored Fusion, and Learnable Relative Position
+> Bias for Road Crack and Pothole Detection**
 
 The task is **two-class (`crack` = 0, `pothole` = 1) detection** on a
 group-disjoint, 8,695-image benchmark built from public crack and pothole

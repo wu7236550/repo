@@ -1,7 +1,9 @@
 # Training Configurations
 
 Reproduces the experimental settings reported in Section 4.2 and Table 2 of the manuscript
-*Lightweight RT-DETR for Mixed-Surface Crack and Pothole Detection*.
+*MCL-DETR: A Lightweight Real-Time Detection Transformer with Multi-Scale Partial
+Convolution, Context-Anchored Fusion, and Learnable Relative Position Bias for Road
+Crack and Pothole Detection*.
 
 ## Environment
 

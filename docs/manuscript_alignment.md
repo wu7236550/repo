@@ -1,8 +1,8 @@
 # Manuscript Alignment Notes
 
-This repository accompanies *A Lightweight Real-Time Detection Transformer with
-Multi-Scale Partial Convolution and Context-Anchored Fusion for Road Crack and
-Pothole Detection*.
+This repository accompanies *MCL-DETR: A Lightweight Real-Time Detection Transformer
+with Multi-Scale Partial Convolution, Context-Anchored Fusion, and Learnable Relative
+Position Bias for Road Crack and Pothole Detection*.
 
 ## Scope of the release
 

@@ -1,42 +1,20 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 
-from ultralytics.nn.backbone.lsnet import SKA
 import contextlib
 from copy import deepcopy
 from pathlib import Path
 
-import timm
 import torch
 import torch.nn as nn
 
 from ultralytics.nn.modules import *
-from ultralytics.nn.extra_modules import *
+from ultralytics.nn.extra_modules import CAA, LRPB_AIFI, MCAF, MSPC, PE_AIFI, RepNCSPELAN4
 from ultralytics.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
 from ultralytics.utils.loss import v8ClassificationLoss, v8DetectionLoss, v8PoseLoss, v8SegmentationLoss
 from ultralytics.utils.plotting import feature_visualization
 from ultralytics.utils.torch_utils import (fuse_conv_and_bn, fuse_deconv_and_bn, initialize_weights, intersect_dicts,
                                            make_divisible, model_info, scale_img, time_sync)
-
-from ultralytics.nn.backbone.convnextv2 import *
-from ultralytics.nn.backbone.fasternet import *
-from ultralytics.nn.backbone.efficientViT import *
-from ultralytics.nn.backbone.EfficientFormerV2 import *
-from ultralytics.nn.backbone.VanillaNet import *
-from ultralytics.nn.backbone.lsknet import *
-from ultralytics.nn.backbone.SwinTransformer import *
-from ultralytics.nn.backbone.repvit import *
-from ultralytics.nn.backbone.CSwimTramsformer import *
-from ultralytics.nn.backbone.UniRepLKNet import *
-from ultralytics.nn.backbone.TransNext import *
-from ultralytics.nn.backbone.rmt import *
-from ultralytics.nn.backbone.pkinet import *
-from ultralytics.nn.backbone.mobilenetv4 import *
-from ultralytics.nn.backbone.starnet import *
-from ultralytics.nn.extra_modules.mobileMamba.mobilemamba import *
-from ultralytics.nn.backbone.MambaOut import *
-from ultralytics.nn.backbone.overlock import *
-from ultralytics.nn.backbone.lsnet import *
 
 try:
     import thop
@@ -509,6 +487,12 @@ def parse_model(d, ch, verbose=True, warehouse_manager=None):
     ch = [ch]
     layers, save, c2 = [], [], ch[-1]
     is_backbone = False
+    mcl_channel_modules = (Classify, Conv, ConvTranspose, GhostConv, Bottleneck, GhostBottleneck, SPP, SPPF,
+                           DWConv, DSConv, Focus, BottleneckCSP, C1, C2, C2f, C3, C3TR, C3Ghost,
+                           nn.Conv2d, nn.ConvTranspose2d, DWConvTranspose2d, C3x, RepC3, ConvNormLayer,
+                           Blocks, MSPC, MCAF, RepNCSPELAN4)
+    mcl_repeat_modules = (BottleneckCSP, C1, C2, C2f, C3, C3TR, C3Ghost, C3x, RepC3, MSPC)
+    mcl_transformer_modules = (AIFI, LRPB_AIFI, PE_AIFI)
     for i, (f, n, m, args) in enumerate(d['backbone'] + d['head']):
         try:
             if m == 'node_mode':
@@ -529,6 +513,50 @@ def parse_model(d, ch, verbose=True, warehouse_manager=None):
                         args[j] = a
 
         n = n_ = max(round(n * depth), 1) if n > 1 else n
+        # This release intentionally supports only the MCL-DETR configurations
+        # distributed under cfg/models/rt-detr/. Handle them before the legacy
+        # multi-model parser, which is retained solely for checkpoint loading.
+        if m in mcl_channel_modules:
+            c1, c2 = ch[f], args[0]
+            if c2 != nc:
+                c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [c1, c2, *args[1:]]
+            if m in (MCAF, RepNCSPELAN4):
+                args[2] = make_divisible(min(args[2], max_channels) * width, 8)
+                args[3] = make_divisible(min(args[3], max_channels) * width, 8)
+            if m in mcl_repeat_modules:
+                args.insert(2, n)
+                n = 1
+        elif m in mcl_transformer_modules:
+            c2 = ch[f]
+            args = [ch[f], *args]
+        elif m is CAA:
+            c2 = ch[f]
+            args = [c2, *args]
+        elif m is nn.BatchNorm2d:
+            c2 = ch[f]
+            args = [c2]
+        elif m is Concat:
+            c2 = sum(ch[x] for x in f)
+        elif m is RTDETRDecoder:
+            c2 = ch[f[-1]]
+            args.insert(1, [ch[x] for x in f])
+        elif m is nn.Upsample:
+            c2 = ch[f]
+
+        if m in mcl_channel_modules or m in mcl_transformer_modules or m in (CAA, nn.BatchNorm2d, Concat, RTDETRDecoder, nn.Upsample):
+            m_ = nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)
+            t = str(m)[8:-2].replace('__main__.', '')
+            m_.np = sum(x.numel() for x in m_.parameters())
+            m_.i, m_.f, m_.type = i, f, t
+            if verbose:
+                LOGGER.info(f'{i:>3}{str(f):>20}{n_:>3}{m_.np:10.0f}  {t:<45}{str(args):<30}')
+            save.extend(x % i for x in ([f] if isinstance(f, int) else f) if x != -1)
+            layers.append(m_)
+            if i == 0:
+                ch = []
+            ch.append(c2)
+            continue
         if m in (Classify, Conv, ConvTranspose, GhostConv, Bottleneck, GhostBottleneck, SPP, SPPF, DWConv, DSConv, Focus,
                  BottleneckCSP, C1, C2, C2f, C3, C3TR, C3Ghost, nn.Conv2d, nn.ConvTranspose2d, DWConvTranspose2d, C3x, RepC3,
                  ConvNormLayer, DWRC3, C3_DWR, C2f_DWR, C3_DCNv2_Dynamic, C2f_DCNv2_Dynamic, BasicBlock_DCNv2_Dynamic, BottleNeck_DCNv2_Dynamic,
